@@ -1,0 +1,9 @@
+{
+  "name": "controle-obra-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Prototipo estatico para controle de avancos de obra por pavimento e unidade.",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
