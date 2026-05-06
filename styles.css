@@ -195,6 +195,10 @@ select {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.wide-input {
+  grid-column: 1 / -1;
+}
+
 .asset-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -372,7 +376,7 @@ select {
   align-items: end;
   display: grid;
   gap: 12px;
-  grid-template-columns: minmax(190px, 320px) auto minmax(170px, 240px);
+  grid-template-columns: minmax(180px, 280px) minmax(180px, 240px) auto minmax(170px, 240px);
   margin-bottom: 16px;
 }
 
@@ -406,11 +410,43 @@ select {
   border-radius: 8px;
   box-shadow: var(--shadow);
   overflow: auto;
+  scroll-behavior: smooth;
+  touch-action: pan-x pan-y;
 }
 
 .matrix {
   display: grid;
   min-width: max-content;
+}
+
+.matrix.slide-next {
+  animation: slideNext 220ms ease-out;
+}
+
+.matrix.slide-previous {
+  animation: slidePrevious 220ms ease-out;
+}
+
+@keyframes slideNext {
+  from {
+    opacity: 0.35;
+    transform: translateX(34px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slidePrevious {
+  from {
+    opacity: 0.35;
+    transform: translateX(-34px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .matrix-cell {
@@ -471,16 +507,62 @@ select {
 .summary-strip {
   display: grid;
   gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: 1fr;
   margin-bottom: 16px;
 }
 
+.progress-chart,
 .summary-card {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 8px;
   box-shadow: var(--shadow);
   padding: 14px;
+}
+
+.progress-chart header {
+  margin-bottom: 14px;
+}
+
+.chart-row {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(110px, 180px) minmax(120px, 1fr) 72px;
+  min-height: 34px;
+}
+
+.chart-row span {
+  font-size: 13px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chart-track {
+  background: #e6ebf0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  height: 14px;
+  overflow: hidden;
+}
+
+.chart-fill {
+  background: var(--accent);
+  height: 100%;
+  min-width: 2px;
+}
+
+.chart-row strong {
+  color: var(--accent);
+  font-size: 13px;
+  text-align: right;
+}
+
+.empty-note {
+  color: var(--muted);
+  font-size: 14px;
 }
 
 .summary-card strong {
@@ -649,5 +731,13 @@ select {
 
   .matrix-cell.floor-label {
     min-width: 106px;
+  }
+
+  .chart-row {
+    grid-template-columns: 1fr 64px;
+  }
+
+  .chart-row span {
+    grid-column: 1 / -1;
   }
 }

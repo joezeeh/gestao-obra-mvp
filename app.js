@@ -17,6 +17,8 @@ let activeView = "setup";
 let activeStageId = state.stages[0]?.id || "";
 let draggedFloorId = "";
 let draggedStageId = "";
+let stageSlideDirection = "";
+let touchStartX = 0;
 
 const elements = {
   tabs: document.querySelectorAll(".tab"),
@@ -104,8 +106,9 @@ function wireEvents() {
   });
 
   elements.trackingStage.addEventListener("change", () => {
-    activeStageId = elements.trackingStage.value;
-    render();
+    const currentIndex = state.stages.findIndex((stage) => stage.id === activeStageId);
+    const nextIndex = state.stages.findIndex((stage) => stage.id === elements.trackingStage.value);
+    setActiveStage(elements.trackingStage.value, nextIndex >= currentIndex ? "next" : "previous");
   });
 
   elements.previousStage.addEventListener("click", () => moveStage(-1));
@@ -115,6 +118,15 @@ function wireEvents() {
   elements.importFile.addEventListener("change", importState);
 
   document.addEventListener("keydown", handleGridNavigation);
+  elements.trackingMatrix.addEventListener("touchstart", (event) => {
+    touchStartX = event.touches[0]?.clientX || 0;
+  }, { passive: true });
+  elements.trackingMatrix.addEventListener("touchend", (event) => {
+    const touchEndX = event.changedTouches[0]?.clientX || 0;
+    const distance = touchEndX - touchStartX;
+    if (Math.abs(distance) < 60) return;
+    moveStage(distance < 0 ? 1 : -1);
+  });
 }
 
 function addFloorRowsFromMatrix() {
@@ -149,7 +161,12 @@ function moveStage(offset) {
   const index = state.stages.findIndex((stage) => stage.id === activeStageId);
   if (index < 0 || state.stages.length === 0) return;
   const nextIndex = (index + offset + state.stages.length) % state.stages.length;
-  activeStageId = state.stages[nextIndex].id;
+  setActiveStage(state.stages[nextIndex].id, offset > 0 ? "next" : "previous");
+}
+
+function setActiveStage(stageId, direction = "") {
+  activeStageId = stageId;
+  stageSlideDirection = direction;
   render();
 }
 
@@ -293,7 +310,7 @@ function renderFloors() {
     unitInput.dataset.grid = "floors";
     unitInput.dataset.row = String(index);
     unitInput.dataset.col = "1";
-    unitInput.setAttribute("aria-label", "Numero de unidades");
+    unitInput.setAttribute("aria-label", "Número de unidades");
     unitInput.addEventListener("change", () => {
       const count = Math.max(1, Number(unitInput.value) || 1);
       floor.units = generateUnitList(count);
@@ -335,6 +352,7 @@ function renderStageSelect() {
 
 function renderTrackingMatrix() {
   elements.trackingMatrix.innerHTML = "";
+  elements.trackingMatrix.classList.remove("slide-next", "slide-previous");
 
   const units = collectUnits();
   const columns = ["124px", ...units.map(() => "62px")].join(" ");
@@ -366,19 +384,22 @@ function renderTrackingMatrix() {
   const progress = calculateProgress(activeStageId);
   elements.trackingPercent.textContent = formatPercent(progress.percent);
   elements.trackingCount.textContent = `${progress.done} de ${progress.total} unidades`;
+
+  if (stageSlideDirection) {
+    void elements.trackingMatrix.offsetWidth;
+    elements.trackingMatrix.classList.add(stageSlideDirection === "next" ? "slide-next" : "slide-previous");
+    stageSlideDirection = "";
+  }
 }
 
 function renderReview() {
   elements.summaryStrip.innerHTML = "";
   elements.reviewGrid.innerHTML = "";
 
+  renderProgressChart();
+
   state.stages.forEach((stage) => {
     const progress = calculateProgress(stage.id);
-
-    const summary = document.createElement("article");
-    summary.className = "summary-card";
-    summary.innerHTML = `<span>${stage.name}</span><strong>${formatPercent(progress.percent)}</strong>`;
-    elements.summaryStrip.append(summary);
 
     const stageCard = document.createElement("article");
     stageCard.className = "review-stage";
@@ -416,6 +437,51 @@ function renderReview() {
     stageCard.append(header, miniMatrix);
     elements.reviewGrid.append(stageCard);
   });
+}
+
+function renderProgressChart() {
+  const chart = document.createElement("article");
+  chart.className = "progress-chart";
+
+  const header = document.createElement("header");
+  const title = document.createElement("h2");
+  title.textContent = "Avanço por etapa";
+  header.append(title);
+  chart.append(header);
+
+  if (state.stages.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "empty-note";
+    empty.textContent = "Cadastre etapas para visualizar o gráfico.";
+    chart.append(empty);
+    elements.summaryStrip.append(chart);
+    return;
+  }
+
+  state.stages.forEach((stage) => {
+    const progress = calculateProgress(stage.id);
+    const row = document.createElement("div");
+    row.className = "chart-row";
+
+    const label = document.createElement("span");
+    label.textContent = stage.name;
+
+    const track = document.createElement("div");
+    track.className = "chart-track";
+
+    const fill = document.createElement("div");
+    fill.className = "chart-fill";
+    fill.style.width = `${Math.round(progress.percent * 100)}%`;
+
+    const value = document.createElement("strong");
+    value.textContent = formatPercent(progress.percent);
+
+    track.append(fill);
+    row.append(label, track, value);
+    chart.append(row);
+  });
+
+  elements.summaryStrip.append(chart);
 }
 
 function addMatrixCell(text, className) {
@@ -615,7 +681,7 @@ function importState(event) {
       activeStageId = state.stages[0]?.id || "";
       saveAndRender();
     } catch {
-      alert("Arquivo invalido.");
+      alert("Arquivo inválido.");
     }
   });
   reader.readAsText(file);

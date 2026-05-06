@@ -20,10 +20,10 @@
         </div>
       </header>
 
-      <nav class="tabs" aria-label="Navegacao principal">
-        <button class="tab active" data-view="setup" type="button">Configuracao</button>
+      <nav class="tabs" aria-label="Navegação principal">
+        <button class="tab active" data-view="setup" type="button">Configuração</button>
         <button class="tab" data-view="tracking" type="button">Apontamento</button>
-        <button class="tab" data-view="review" type="button">Conferencia</button>
+        <button class="tab" data-view="review" type="button">Conferência</button>
       </nav>
 
       <main>
@@ -44,11 +44,7 @@
                 </label>
                 <label class="field">
                   <span>Local</span>
-                  <input id="projectLocation" class="grid-input" data-grid="project" data-row="1" data-col="0" type="text" />
-                </label>
-                <label class="field">
-                  <span>Atualizacao</span>
-                  <input id="updatedAt" class="grid-input" data-grid="project" data-row="1" data-col="1" type="datetime-local" />
+                  <input id="projectLocation" class="grid-input wide-input" data-grid="project" data-row="1" data-col="0" type="text" />
                 </label>
               </div>
               <div class="asset-grid">
@@ -79,11 +75,11 @@
                   <input id="floorMatrixUnits" class="grid-input" data-grid="floorSeed" data-row="0" data-col="1" type="number" min="1" />
                 </label>
                 <label class="field">
-                  <span>Repeticoes</span>
+                  <span>Repetições</span>
                   <input id="floorMatrixRepeat" class="grid-input" data-grid="floorSeed" data-row="0" data-col="2" type="number" min="1" />
                 </label>
               </div>
-              <button class="primary-button" id="addFloorMatrix" type="button">Adicionar a matriz</button>
+              <button class="primary-button" id="addFloorMatrix" type="button">Adicionar à matriz</button>
             </section>
 
           </div>
@@ -96,7 +92,7 @@
               <span></span>
               <span>Pavimento</span>
               <span>Unidades</span>
-              <span>Previa</span>
+              <span>Prévia</span>
               <span></span>
             </div>
             <div class="floor-list" id="floorList"></div>
@@ -126,9 +122,13 @@
               <span>Etapa</span>
               <select id="trackingStage"></select>
             </label>
+            <label class="field">
+              <span>Atualização</span>
+              <input id="updatedAt" type="datetime-local" />
+            </label>
             <div class="stage-buttons">
               <button class="ghost-button square-button" id="previousStage" type="button" title="Etapa anterior">&lt;</button>
-              <button class="ghost-button square-button" id="nextStage" type="button" title="Proxima etapa">&gt;</button>
+              <button class="ghost-button square-button" id="nextStage" type="button" title="Próxima etapa">&gt;</button>
             </div>
             <div class="progress-box">
               <strong id="trackingPercent">0,0%</strong>
