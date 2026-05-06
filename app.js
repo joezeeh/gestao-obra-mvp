@@ -1,4 +1,5 @@
 const STORAGE_KEY = "obra-mvp1-state-v2";
+const FLOOR_CHECK_KEY = "__floor__";
 
 const initialState = {
   projectName: "",
@@ -150,7 +151,7 @@ function addStageFromInput() {
   const name = elements.stageName.value.trim();
   if (!name) return;
 
-  const stage = { id: crypto.randomUUID(), name };
+  const stage = { id: crypto.randomUUID(), name, trackingLevel: "unit" };
   state.stages.push(stage);
   activeStageId = stage.id;
   elements.stageName.value = "";
@@ -244,17 +245,34 @@ function renderStages() {
       saveAndRender(false);
     });
 
+    const control = document.createElement("label");
+    control.className = "stage-control";
+
+    const controlInput = document.createElement("input");
+    controlInput.type = "checkbox";
+    controlInput.checked = isFloorControlled(stage.id);
+    controlInput.addEventListener("change", () => {
+      stage.trackingLevel = controlInput.checked ? "floor" : "unit";
+      saveAndRender();
+    });
+
+    const controlText = document.createElement("span");
+    controlText.textContent = "Por pavimento";
+    control.append(controlInput, controlText);
+
     const remove = document.createElement("button");
-    remove.className = "danger-button";
+    remove.className = "danger-button icon-button";
     remove.type = "button";
-    remove.textContent = "Remover";
+    remove.textContent = "-";
+    remove.title = "Remover etapa";
+    remove.setAttribute("aria-label", "Remover etapa");
     remove.addEventListener("click", () => {
       state.stages = state.stages.filter((item) => item.id !== stage.id);
       delete state.checks[stage.id];
       saveAndRender();
     });
 
-    row.append(handle, order, nameInput, remove);
+    row.append(handle, order, nameInput, control, remove);
     elements.stageList.append(row);
   });
 }
@@ -324,9 +342,11 @@ function renderFloors() {
     preview.textContent = floor.units.join(", ");
 
     const remove = document.createElement("button");
-    remove.className = "danger-button";
+    remove.className = "danger-button icon-button";
     remove.type = "button";
-    remove.textContent = "Remover";
+    remove.textContent = "-";
+    remove.title = "Remover pavimento";
+    remove.setAttribute("aria-label", "Remover pavimento");
     remove.addEventListener("click", () => {
       state.floors = state.floors.filter((item) => item.id !== floor.id);
       removeChecksForFloor(floor.id);
@@ -353,6 +373,11 @@ function renderStageSelect() {
 function renderTrackingMatrix() {
   elements.trackingMatrix.innerHTML = "";
   elements.trackingMatrix.classList.remove("slide-next", "slide-previous");
+
+  if (isFloorControlled(activeStageId)) {
+    renderFloorTrackingMatrix();
+    return;
+  }
 
   const units = collectUnits();
   const columns = ["124px", ...units.map(() => "62px")].join(" ");
@@ -385,6 +410,38 @@ function renderTrackingMatrix() {
   elements.trackingPercent.textContent = formatPercent(progress.percent);
   elements.trackingCount.textContent = `${progress.done} de ${progress.total} unidades`;
 
+  playStageSlide();
+}
+
+function renderFloorTrackingMatrix() {
+  elements.trackingMatrix.style.gridTemplateColumns = "124px 118px";
+
+  addMatrixCell("", "matrix-cell header corner");
+  addMatrixCell("Pavimento", "matrix-cell header");
+
+  state.floors.forEach((floor) => {
+    addMatrixCell(floor.name, "matrix-cell floor-label");
+
+    const cell = document.createElement("div");
+    cell.className = "matrix-cell";
+
+    const button = document.createElement("button");
+    button.className = `check-button ${isChecked(activeStageId, floor.id, FLOOR_CHECK_KEY) ? "checked" : ""}`;
+    button.type = "button";
+    button.setAttribute("aria-label", `${floor.name} concluído`);
+    button.addEventListener("click", () => toggleCheck(activeStageId, floor.id, FLOOR_CHECK_KEY));
+    cell.append(button);
+    elements.trackingMatrix.append(cell);
+  });
+
+  const progress = calculateProgress(activeStageId);
+  elements.trackingPercent.textContent = formatPercent(progress.percent);
+  elements.trackingCount.textContent = `${progress.done} de ${progress.total} pavimentos`;
+
+  playStageSlide();
+}
+
+function playStageSlide() {
   if (stageSlideDirection) {
     void elements.trackingMatrix.offsetWidth;
     elements.trackingMatrix.classList.add(stageSlideDirection === "next" ? "slide-next" : "slide-previous");
@@ -396,6 +453,7 @@ function renderReview() {
   elements.summaryStrip.innerHTML = "";
   elements.reviewGrid.innerHTML = "";
 
+  renderReportHeader();
   renderProgressChart();
 
   state.stages.forEach((stage) => {
@@ -424,7 +482,9 @@ function renderReview() {
       const dots = document.createElement("div");
       dots.className = "mini-units";
 
-      floor.units.forEach((unit) => {
+      const units = isFloorControlled(stage.id) ? [FLOOR_CHECK_KEY] : floor.units;
+
+      units.forEach((unit) => {
         const dot = document.createElement("span");
         dot.className = `mini-dot ${isChecked(stage.id, floor.id, unit) ? "checked" : ""}`;
         dots.append(dot);
@@ -437,6 +497,47 @@ function renderReview() {
     stageCard.append(header, miniMatrix);
     elements.reviewGrid.append(stageCard);
   });
+}
+
+function renderReportHeader() {
+  const report = document.createElement("article");
+  report.className = "report-header";
+
+  const logoBox = document.createElement("div");
+  logoBox.className = "report-logo";
+  if (state.builderLogo) {
+    const logo = document.createElement("img");
+    logo.src = state.builderLogo;
+    logo.alt = "";
+    logoBox.append(logo);
+  }
+
+  const info = document.createElement("div");
+  info.className = "report-info";
+
+  const title = document.createElement("h2");
+  title.textContent = state.projectName || "Obra sem nome";
+
+  const meta = document.createElement("p");
+  const parts = [state.builderName, state.projectLocation].filter(Boolean);
+  meta.textContent = parts.length > 0 ? parts.join(" | ") : "Dados da obra não informados";
+
+  const updated = document.createElement("span");
+  updated.textContent = state.updatedAt ? `Atualizado em ${formatDateTime(state.updatedAt)}` : "Atualização não informada";
+
+  info.append(title, meta, updated);
+
+  const photoBox = document.createElement("div");
+  photoBox.className = "report-photo";
+  if (state.projectPhoto) {
+    const photo = document.createElement("img");
+    photo.src = state.projectPhoto;
+    photo.alt = "";
+    photoBox.append(photo);
+  }
+
+  report.append(logoBox, info, photoBox);
+  elements.summaryStrip.append(report);
 }
 
 function renderProgressChart() {
@@ -503,6 +604,17 @@ function isChecked(stageId, floorId, unit) {
 }
 
 function calculateProgress(stageId) {
+  if (isFloorControlled(stageId)) {
+    const total = state.floors.length;
+    const done = state.floors.filter((floor) => isChecked(stageId, floor.id, FLOOR_CHECK_KEY)).length;
+
+    return {
+      total,
+      done,
+      percent: total === 0 ? 0 : done / total
+    };
+  }
+
   const total = state.floors.reduce((sum, floor) => sum + floor.units.length, 0);
   const done = state.floors.reduce((sum, floor) => {
     const completed = floor.units.filter((unit) => isChecked(stageId, floor.id, unit)).length;
@@ -514,6 +626,14 @@ function calculateProgress(stageId) {
     done,
     percent: total === 0 ? 0 : done / total
   };
+}
+
+function getStage(stageId) {
+  return state.stages.find((stage) => stage.id === stageId);
+}
+
+function isFloorControlled(stageId) {
+  return getStage(stageId)?.trackingLevel === "floor";
 }
 
 function collectUnits() {
@@ -640,12 +760,19 @@ function loadState() {
       builderLogo: parsed.builderLogo || initialState.builderLogo,
       projectPhoto: parsed.projectPhoto || initialState.projectPhoto,
       floors: Array.isArray(parsed.floors) ? parsed.floors : initialState.floors,
-      stages: Array.isArray(parsed.stages) ? parsed.stages : initialState.stages,
+      stages: Array.isArray(parsed.stages) ? parsed.stages.map(normalizeStage) : initialState.stages,
       checks: parsed.checks || {}
     };
   } catch {
     return initialState;
   }
+}
+
+function normalizeStage(stage) {
+  return {
+    ...stage,
+    trackingLevel: stage.trackingLevel === "floor" ? "floor" : "unit"
+  };
 }
 
 function exportState() {
@@ -675,7 +802,7 @@ function importState(event) {
         builderLogo: imported.builderLogo || "",
         projectPhoto: imported.projectPhoto || "",
         floors: Array.isArray(imported.floors) ? imported.floors : [],
-        stages: Array.isArray(imported.stages) ? imported.stages : [],
+        stages: Array.isArray(imported.stages) ? imported.stages.map(normalizeStage) : [],
         checks: imported.checks || {}
       };
       activeStageId = state.stages[0]?.id || "";
@@ -694,6 +821,16 @@ function formatPercent(value) {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1
   }).format(value);
+}
+
+function formatDateTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short"
+  }).format(date);
 }
 
 function toDateTimeInputValue(date) {

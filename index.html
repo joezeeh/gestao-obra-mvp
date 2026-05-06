@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Controle de Obra</title>
+    <title>Gestão de Obra</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -11,7 +11,7 @@
       <header class="topbar">
         <div>
           <p class="eyebrow">MVP 1</p>
-          <h1>Controle de Obra</h1>
+          <h1>Gestão de Obra</h1>
         </div>
         <div class="topbar-actions">
           <button class="ghost-button" id="exportButton" type="button">Exportar</button>
@@ -27,9 +27,16 @@
       </nav>
 
       <main>
-        <section class="view active" id="setupView">
-          <div class="layout-grid">
-            <section class="panel wide-panel">
+        <section class="view active setup-view" id="setupView">
+          <section class="config-hero">
+            <div>
+              <p class="eyebrow">Configuração</p>
+              <h2>Dados base do empreendimento</h2>
+            </div>
+          </section>
+
+          <div class="config-grid">
+            <section class="panel project-panel">
               <div class="panel-header">
                 <h2>Obra</h2>
               </div>
@@ -61,7 +68,7 @@
               </div>
             </section>
 
-            <section class="panel wide-panel">
+            <section class="panel quick-panel">
               <div class="panel-header">
                 <h2>Cadastro de Pavimentos</h2>
               </div>
@@ -79,41 +86,43 @@
                   <input id="floorMatrixRepeat" class="grid-input" data-grid="floorSeed" data-row="0" data-col="2" type="number" min="1" />
                 </label>
               </div>
-              <button class="primary-button" id="addFloorMatrix" type="button">Adicionar à matriz</button>
+              <button class="primary-button icon-button" id="addFloorMatrix" type="button" title="Adicionar à matriz" aria-label="Adicionar à matriz">+</button>
             </section>
-
           </div>
 
-          <section class="panel full-panel">
-            <div class="panel-header">
-              <h2>Pavimentos e Unidades</h2>
-            </div>
-            <div class="floor-table-head" aria-hidden="true">
-              <span></span>
-              <span>Pavimento</span>
-              <span>Unidades</span>
-              <span>Prévia</span>
-              <span></span>
-            </div>
-            <div class="floor-list" id="floorList"></div>
-          </section>
+          <div class="config-grid lower-grid">
+            <section class="panel table-panel">
+              <div class="panel-header">
+                <h2>Pavimentos e Unidades</h2>
+              </div>
+              <div class="floor-table-head" aria-hidden="true">
+                <span></span>
+                <span>Pavimento</span>
+                <span>Unidades</span>
+                <span>Prévia</span>
+                <span></span>
+              </div>
+              <div class="floor-list" id="floorList"></div>
+            </section>
 
-          <section class="panel full-panel">
-            <div class="panel-header">
-              <h2>Etapas</h2>
-            </div>
-            <div class="inline-form stage-form">
-              <input id="stageName" type="text" placeholder="Reboco" />
-              <button class="primary-button" id="addStage" type="button">Adicionar</button>
-            </div>
-            <div class="stage-table-head" aria-hidden="true">
-              <span></span>
-              <span>Ordem</span>
-              <span>Etapa</span>
-              <span></span>
-            </div>
-            <div class="stage-list" id="stageList"></div>
-          </section>
+            <section class="panel table-panel">
+              <div class="panel-header">
+                <h2>Etapas</h2>
+              </div>
+              <div class="inline-form stage-form">
+                <input id="stageName" type="text" placeholder="Reboco" />
+                <button class="primary-button icon-button" id="addStage" type="button" title="Adicionar etapa" aria-label="Adicionar etapa">+</button>
+              </div>
+              <div class="stage-table-head" aria-hidden="true">
+                <span></span>
+                <span>Ordem</span>
+                <span>Etapa</span>
+                <span>Controle</span>
+                <span></span>
+              </div>
+              <div class="stage-list" id="stageList"></div>
+            </section>
+          </div>
         </section>
 
         <section class="view" id="trackingView">
