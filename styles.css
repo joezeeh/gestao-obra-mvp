@@ -1,16 +1,16 @@
 :root {
-  --bg: #f6f7f9;
-  --surface: #ffffff;
-  --surface-2: #eef2f5;
-  --line: #d7dde4;
-  --text: #17202a;
-  --muted: #667085;
-  --primary: #235789;
-  --primary-strong: #17446e;
-  --accent: #2f855a;
+  --bg: #081424;
+  --surface: #101d2f;
+  --surface-2: #17263b;
+  --line: #2d3d55;
+  --text: #edf4ff;
+  --muted: #9fb0c7;
+  --primary: #3b82f6;
+  --primary-strong: #2563eb;
+  --accent: #35c27c;
   --warning: #b7791f;
-  --danger: #b42318;
-  --shadow: 0 10px 30px rgba(23, 32, 42, 0.08);
+  --danger: #ff6b6b;
+  --shadow: 0 14px 34px rgba(0, 0, 0, 0.24);
 }
 
 * {
@@ -253,8 +253,8 @@ main {
 
 input,
 select {
-  background: #fff;
-  border: 1px solid #c8d0d9;
+  background: #0b1728;
+  border: 1px solid #34465f;
   border-radius: 6px;
   color: var(--text);
   min-height: 42px;
@@ -309,7 +309,7 @@ select {
 
 .asset-uploader img {
   align-items: center;
-  background: #fff;
+  background: #0b1728;
   border: 1px solid var(--line);
   border-radius: 6px;
   display: block;
@@ -351,8 +351,8 @@ select {
 }
 
 .danger-button {
-  background: #fff7f6;
-  border: 1px solid #f0b8b2;
+  background: rgba(255, 107, 107, 0.12);
+  border: 1px solid rgba(255, 107, 107, 0.35);
   color: var(--danger);
 }
 
@@ -483,7 +483,7 @@ select {
   align-items: end;
   display: grid;
   gap: 12px;
-  grid-template-columns: minmax(170px, 240px) minmax(170px, 220px) minmax(170px, 220px) auto minmax(170px, 230px) minmax(150px, 190px);
+  grid-template-columns: minmax(170px, 260px) minmax(170px, 240px) auto minmax(170px, 230px) minmax(150px, 190px);
   margin-bottom: 16px;
 }
 
@@ -575,7 +575,7 @@ select {
 
 .matrix-cell.header,
 .matrix-cell.floor-label {
-  background: #f0f4f8;
+  background: #15243a;
   font-weight: 700;
 }
 
@@ -595,8 +595,8 @@ select {
 
 .check-button {
   align-items: center;
-  background: #fff;
-  border: 2px solid #8f98a3;
+  background: #0b1728;
+  border: 2px solid #73849b;
   border-radius: 5px;
   color: #fff;
   display: flex;
@@ -705,7 +705,7 @@ select {
 }
 
 .chart-track {
-  background: #e6ebf0;
+  background: #0b1728;
   border: 1px solid var(--line);
   border-radius: 999px;
   height: 14px;
@@ -765,8 +765,102 @@ select {
   margin-bottom: 12px;
 }
 
-.measurement-table-scroll {
+.measurement-table-scroll,
+.measurement-board-scroll {
   overflow: auto;
+}
+
+.measurement-board {
+  align-items: start;
+  display: grid;
+  gap: 24px;
+  grid-template-columns: 430px 150px minmax(520px, 1fr);
+  min-width: 1120px;
+}
+
+.measurement-block {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.measurement-block th {
+  background: #333b48;
+  border: 1px solid #566071;
+  color: #fff;
+  font-size: 12px;
+  padding: 7px 8px;
+  text-align: center;
+}
+
+.measurement-block td {
+  background: #0f1a2b;
+  border: 1px solid #26364c;
+  color: var(--text);
+  font-size: 12px;
+  height: 28px;
+  padding: 4px 7px;
+  text-align: center;
+}
+
+.services-block td:nth-child(2),
+.services-block th:nth-child(2) {
+  text-align: left;
+}
+
+.services-block td:first-child {
+  color: var(--muted);
+  width: 32px;
+}
+
+.current-block th {
+  background: #3f8dcc;
+  font-size: 15px;
+}
+
+.current-block td {
+  background: #b7e5cf;
+  color: #061525;
+  font-weight: 800;
+}
+
+.history-block {
+  table-layout: fixed;
+}
+
+.history-block th,
+.history-block td {
+  min-width: 132px;
+}
+
+.measurement-edit-head {
+  vertical-align: top;
+}
+
+.measurement-header-controls {
+  display: grid;
+  gap: 5px;
+}
+
+.measurement-header-controls input {
+  background: #0b1728;
+  color: var(--text);
+  font-size: 11px;
+  min-height: 28px;
+  padding: 4px 6px;
+}
+
+.mini-remove {
+  min-height: 28px;
+  padding: 0;
+}
+
+.measurement-delta-input {
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  min-height: 24px;
+  padding: 0;
+  text-align: center;
 }
 
 .measurement-table {
@@ -784,7 +878,7 @@ select {
 }
 
 .measurement-table td {
-  border: 1px solid #e3e7eb;
+  border: 1px solid #26364c;
   font-size: 12px;
   padding: 6px 8px;
   text-align: center;
@@ -797,6 +891,7 @@ select {
 
 .measurement-table td:nth-child(4) {
   background: #c7ead8;
+  color: #061525;
   font-weight: 700;
 }
 

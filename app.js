@@ -11,7 +11,6 @@ const initialState = {
   projectLocation: "",
   updatedAt: "",
   targetDeliveryDate: "",
-  forecastFinishDate: "",
   builderLogo: "",
   projectPhoto: "",
   floors: [],
@@ -31,6 +30,7 @@ let currentUser = null;
 let currentProjectId = "";
 let remoteReady = false;
 let suppressRealtimeReload = false;
+let suppressRealtimeUntil = 0;
 let realtimeChannel = null;
 let saveProjectTimer = null;
 const saveStageTimers = new Map();
@@ -57,7 +57,6 @@ const elements = {
   projectLocation: document.querySelector("#projectLocation"),
   updatedAt: document.querySelector("#updatedAt"),
   targetDeliveryDate: document.querySelector("#targetDeliveryDate"),
-  forecastFinishDate: document.querySelector("#forecastFinishDate"),
   uploadMeasurement: document.querySelector("#uploadMeasurement"),
   builderLogo: document.querySelector("#builderLogo"),
   projectPhoto: document.querySelector("#projectPhoto"),
@@ -131,11 +130,6 @@ function wireEvents() {
   elements.updatedAt.addEventListener("input", () => {
     state.updatedAt = elements.updatedAt.value;
     queueSaveProject();
-    saveAndRender(false);
-  });
-
-  elements.forecastFinishDate.addEventListener("input", () => {
-    state.forecastFinishDate = elements.forecastFinishDate.value;
     saveAndRender(false);
   });
 
@@ -276,6 +270,7 @@ async function loadRemoteWorkspace() {
 
   showApp();
   remoteReady = false;
+  const previousActiveStageId = activeStageId;
 
   let project = await fetchFirstProject();
   if (!project) {
@@ -298,7 +293,6 @@ async function loadRemoteWorkspace() {
     projectLocation: project.location || "",
     updatedAt: project.updated_at ? toDateTimeInputValue(new Date(project.updated_at)) : "",
     targetDeliveryDate: project.target_delivery_date || "",
-    forecastFinishDate: state.forecastFinishDate || "",
     builderLogo: project.logo_url || "",
     projectPhoto: project.photo_url || "",
     floors: (floors || []).map((floor) => ({
@@ -315,7 +309,9 @@ async function loadRemoteWorkspace() {
     measurements: buildMeasurements(measurements || [], measurementTotals || [])
   };
 
-  activeStageId = state.stages[0]?.id || "";
+  activeStageId = state.stages.some((stage) => stage.id === previousActiveStageId)
+    ? previousActiveStageId
+    : state.stages[0]?.id || "";
   remoteReady = true;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   subscribeToRealtime();
@@ -404,19 +400,32 @@ function subscribeToRealtime() {
 }
 
 async function reloadFromRealtime() {
-  if (suppressRealtimeReload) return;
+  if (suppressRealtimeReload || Date.now() < suppressRealtimeUntil) return;
+
+  if (isUserEditing()) {
+    window.setTimeout(reloadFromRealtime, 900);
+    return;
+  }
+
   await loadRemoteWorkspace();
 }
 
 async function withRealtimeSuppressed(action) {
   suppressRealtimeReload = true;
+  suppressRealtimeUntil = Date.now() + 2200;
   try {
     return await action();
   } finally {
     window.setTimeout(() => {
       suppressRealtimeReload = false;
-    }, 250);
+    }, 900);
   }
+}
+
+function isUserEditing() {
+  const active = document.activeElement;
+  if (!active) return false;
+  return ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName);
 }
 
 function queueSaveProject() {
@@ -643,7 +652,6 @@ function render() {
   elements.projectLocation.value = state.projectLocation;
   elements.updatedAt.value = state.updatedAt;
   elements.targetDeliveryDate.value = state.targetDeliveryDate;
-  elements.forecastFinishDate.value = state.forecastFinishDate;
   renderImagePreview(elements.builderLogoPreview, state.builderLogo);
   renderImagePreview(elements.projectPhotoPreview, state.projectPhoto);
 
@@ -974,6 +982,11 @@ async function uploadMeasurement() {
     return;
   }
 
+  if (!state.updatedAt) {
+    alert("Informe a data de atualização antes de subir a medição.");
+    return;
+  }
+
   if (state.stages.length === 0) {
     alert("Cadastre etapas antes de subir a medição.");
     return;
@@ -981,7 +994,7 @@ async function uploadMeasurement() {
 
   const sortOrder = state.measurements.length;
   const label = `M${String(sortOrder + 1).padStart(2, "0")}`;
-  const measuredAt = state.updatedAt ? state.updatedAt.slice(0, 10) : toDateInputValue(new Date());
+  const measuredAt = state.updatedAt.slice(0, 10);
 
   await withRealtimeSuppressed(async () => {
     const { data: measurement, error } = await supabaseClient
@@ -990,7 +1003,7 @@ async function uploadMeasurement() {
         project_id: currentProjectId,
         label,
         measured_at: measuredAt,
-        forecast_finish_date: state.forecastFinishDate || null,
+        forecast_finish_date: null,
         sort_order: sortOrder,
         created_by: currentUser?.id || null
       })
@@ -1038,58 +1051,256 @@ function renderMeasurements() {
 }
 
 function renderMeasurementTable() {
-  const tableWrap = document.createElement("article");
-  tableWrap.className = "measurement-table-card";
+  const card = document.createElement("article");
+  card.className = "measurement-table-card";
 
-  const header = document.createElement("header");
   const title = document.createElement("h2");
   title.textContent = "Unidades concluídas por medição";
-  header.append(title);
-  tableWrap.append(header);
+  card.append(title);
 
   const scroller = document.createElement("div");
-  scroller.className = "measurement-table-scroll";
+  scroller.className = "measurement-board-scroll";
 
+  const board = document.createElement("div");
+  board.className = "measurement-board";
+  board.append(renderServiceBlock(), renderCurrentMeasurementBlock(), renderHistoryMeasurementBlock());
+
+  scroller.append(board);
+  card.append(scroller);
+  elements.measurementReport.append(card);
+}
+
+function renderServiceBlock() {
   const table = document.createElement("table");
-  table.className = "measurement-table";
+  table.className = "measurement-block services-block";
+  table.innerHTML = `
+    <thead>
+      <tr><th colspan="4">SERVIÇOS</th></tr>
+      <tr><th></th><th>ETAPA</th><th>UNIDADE</th><th>QTD. TOTAL</th></tr>
+    </thead>
+  `;
 
-  const thead = document.createElement("thead");
-  const headRow = document.createElement("tr");
-  ["Serviços", "Unidade", "Qtd. total", "Atual", ...state.measurements.map(formatMeasurementHeader)].forEach((label) => {
-    const th = document.createElement("th");
-    th.textContent = label;
-    headRow.append(th);
+  const tbody = document.createElement("tbody");
+  state.stages.forEach((stage, index) => {
+    const progress = calculateProgress(stage.id);
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${escapeHtml(stage.name)}</td>
+      <td>${isFloorControlled(stage.id) ? "PAV." : "APTO"}</td>
+      <td>${progress.total}</td>
+    `;
+    tbody.append(row);
   });
-  thead.append(headRow);
+
+  table.append(tbody);
+  return table;
+}
+
+function renderCurrentMeasurementBlock() {
+  const latest = state.measurements[state.measurements.length - 1];
+  const table = document.createElement("table");
+  table.className = "measurement-block current-block";
+  table.innerHTML = `
+    <thead>
+      <tr><th>${latest?.label || "ATUAL"}</th></tr>
+      <tr><th>${latest ? formatShortDate(latest.measuredAt) : "Sem medição"}</th></tr>
+    </thead>
+  `;
 
   const tbody = document.createElement("tbody");
   state.stages.forEach((stage) => {
     const progress = calculateProgress(stage.id);
     const row = document.createElement("tr");
-    const unitLabel = isFloorControlled(stage.id) ? "PAV." : "APTO";
+    row.innerHTML = `<td>${progress.done || ""}</td>`;
+    tbody.append(row);
+  });
 
-    [stage.name, unitLabel, progress.total, progress.done].forEach((value) => {
-      const td = document.createElement("td");
-      td.textContent = value;
-      row.append(td);
-    });
+  table.append(tbody);
+  return table;
+}
+
+function renderHistoryMeasurementBlock() {
+  const table = document.createElement("table");
+  table.className = "measurement-block history-block";
+
+  const thead = document.createElement("thead");
+  const titleRow = document.createElement("tr");
+  const title = document.createElement("th");
+  title.colSpan = Math.max(1, state.measurements.length);
+  title.textContent = "UNIDADES CONCLUÍDAS POR MEDIÇÃO";
+  titleRow.append(title);
+
+  const inputRow = document.createElement("tr");
+  state.measurements.forEach((measurement) => {
+    const th = document.createElement("th");
+    th.className = "measurement-edit-head";
+    th.append(renderMeasurementHeaderControls(measurement));
+    inputRow.append(th);
+  });
+
+  if (state.measurements.length === 0) {
+    const th = document.createElement("th");
+    th.textContent = "Sem medições";
+    inputRow.append(th);
+  }
+
+  thead.append(titleRow, inputRow);
+
+  const tbody = document.createElement("tbody");
+  state.stages.forEach((stage) => {
+    const row = document.createElement("tr");
 
     state.measurements.forEach((measurement, index) => {
       const previous = index === 0 ? 0 : (state.measurements[index - 1].totals[stage.id]?.completed || 0);
       const current = measurement.totals[stage.id]?.completed || 0;
       const delta = Math.max(0, current - previous);
       const td = document.createElement("td");
-      td.textContent = delta > 0 ? String(delta) : "";
+      const input = document.createElement("input");
+      input.className = "measurement-delta-input";
+      input.type = "number";
+      input.min = "0";
+      input.value = delta > 0 ? String(delta) : "";
+      input.addEventListener("change", () => updateMeasurementDelta(measurement.id, stage.id, Number(input.value) || 0));
+      td.append(input);
       row.append(td);
     });
+
+    if (state.measurements.length === 0) {
+      const td = document.createElement("td");
+      td.textContent = "";
+      row.append(td);
+    }
 
     tbody.append(row);
   });
 
   table.append(thead, tbody);
-  scroller.append(table);
-  tableWrap.append(scroller);
-  elements.measurementReport.append(tableWrap);
+  return table;
+}
+
+function renderMeasurementHeaderControls(measurement) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "measurement-header-controls";
+
+  const label = document.createElement("input");
+  label.value = measurement.label;
+  label.setAttribute("aria-label", "Nome da medição");
+  label.addEventListener("change", () => updateMeasurement(measurement.id, { label: label.value.trim() || measurement.label }));
+
+  const measuredAt = document.createElement("input");
+  measuredAt.type = "date";
+  measuredAt.value = measurement.measuredAt || "";
+  measuredAt.setAttribute("aria-label", "Data da medição");
+  measuredAt.addEventListener("change", () => {
+    if (!measuredAt.value) {
+      measuredAt.value = measurement.measuredAt || "";
+      return;
+    }
+    updateMeasurement(measurement.id, { measured_at: measuredAt.value });
+  });
+
+  const forecast = document.createElement("input");
+  forecast.type = "date";
+  forecast.value = measurement.forecastFinishDate || "";
+  forecast.setAttribute("aria-label", "Término atualizado");
+  forecast.addEventListener("change", () => updateMeasurement(measurement.id, { forecast_finish_date: forecast.value || null }));
+
+  const remove = document.createElement("button");
+  remove.className = "danger-button mini-remove";
+  remove.type = "button";
+  remove.textContent = "-";
+  remove.title = "Remover medição";
+  remove.addEventListener("click", () => deleteMeasurement(measurement.id));
+
+  wrapper.append(label, measuredAt, forecast, remove);
+  return wrapper;
+}
+
+async function updateMeasurement(measurementId, changes) {
+  const measurement = state.measurements.find((item) => item.id === measurementId);
+  if (!measurement) return;
+
+  if (Object.prototype.hasOwnProperty.call(changes, "label")) measurement.label = changes.label;
+  if (Object.prototype.hasOwnProperty.call(changes, "measured_at")) measurement.measuredAt = changes.measured_at || "";
+  if (Object.prototype.hasOwnProperty.call(changes, "forecast_finish_date")) {
+    measurement.forecastFinishDate = changes.forecast_finish_date || "";
+  }
+  saveAndRender(false);
+
+  if (!remoteReady) return;
+  await withRealtimeSuppressed(async () => {
+    const { error } = await supabaseClient
+      .from("measurements")
+      .update(changes)
+      .eq("id", measurementId);
+    if (error) console.error(error);
+  });
+  render();
+}
+
+async function updateMeasurementDelta(measurementId, stageId, delta) {
+  const measurementIndex = state.measurements.findIndex((item) => item.id === measurementId);
+  if (measurementIndex < 0) return;
+
+  const previousCompleted = measurementIndex === 0
+    ? 0
+    : state.measurements[measurementIndex - 1].totals[stageId]?.completed || 0;
+  const stageTotal = calculateProgress(stageId).total;
+  const completed = Math.min(stageTotal, Math.max(0, previousCompleted + delta));
+  const measurement = state.measurements[measurementIndex];
+
+  if (!measurement.totals[stageId]) measurement.totals[stageId] = {};
+  measurement.totals[stageId] = { completed, total: stageTotal };
+  saveAndRender(false);
+
+  if (!remoteReady || !currentProjectId) return;
+  await withRealtimeSuppressed(async () => {
+    const { error } = await supabaseClient
+      .from("measurement_stage_totals")
+      .upsert({
+        measurement_id: measurementId,
+        project_id: currentProjectId,
+        stage_id: stageId,
+        completed_count: completed,
+        total_count: stageTotal
+      }, { onConflict: "measurement_id,stage_id" });
+    if (error) console.error(error);
+  });
+  render();
+}
+
+async function deleteMeasurement(measurementId) {
+  const measurement = state.measurements.find((item) => item.id === measurementId);
+  if (!measurement) return;
+
+  const confirmed = window.confirm(`Remover a medição ${measurement.label}?`);
+  if (!confirmed) return;
+
+  state.measurements = state.measurements.filter((item) => item.id !== measurementId);
+  saveAndRender();
+
+  if (!remoteReady) return;
+  await withRealtimeSuppressed(async () => {
+    const { error } = await supabaseClient
+      .from("measurements")
+      .delete()
+      .eq("id", measurementId);
+    if (error) console.error(error);
+  });
+  await persistMeasurementOrder();
+}
+
+async function persistMeasurementOrder() {
+  if (!remoteReady) return;
+
+  await withRealtimeSuppressed(async () => {
+    const updates = state.measurements.map((measurement, index) => (
+      supabaseClient.from("measurements").update({ sort_order: index }).eq("id", measurement.id)
+    ));
+    const results = await Promise.all(updates);
+    results.forEach(({ error }) => error && console.error(error));
+  });
 }
 
 function renderTrendChart() {
@@ -1506,6 +1717,15 @@ function formatPercent(value) {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1
   }).format(value);
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function formatDateTime(value) {
