@@ -82,6 +82,51 @@ h2 {
   gap: 8px;
 }
 
+.hidden {
+  display: none !important;
+}
+
+.user-pill {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.auth-view {
+  display: none;
+  min-height: calc(100vh - 82px);
+  padding: 28px clamp(16px, 4vw, 32px);
+}
+
+.auth-view.active {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+
+.auth-panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 14px;
+  max-width: 420px;
+  padding: 20px;
+  width: 100%;
+}
+
+.auth-actions {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.auth-message {
+  color: var(--muted);
+  font-size: 13px;
+}
+
 #importFile {
   height: 1px;
   opacity: 0;
@@ -438,7 +483,7 @@ select {
   align-items: end;
   display: grid;
   gap: 12px;
-  grid-template-columns: minmax(180px, 280px) minmax(180px, 240px) auto minmax(170px, 240px);
+  grid-template-columns: minmax(170px, 240px) minmax(170px, 220px) minmax(170px, 220px) auto minmax(170px, 230px) minmax(150px, 190px);
   margin-bottom: 16px;
 }
 
@@ -464,6 +509,12 @@ select {
 .progress-box span {
   color: var(--muted);
   font-size: 13px;
+}
+
+.upload-measurement-button {
+  min-height: 62px;
+  padding: 0 16px;
+  text-align: center;
 }
 
 .matrix-wrap {
@@ -695,6 +746,101 @@ select {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
+.measurement-report,
+.trend-report {
+  margin-bottom: 16px;
+}
+
+.measurement-table-card,
+.trend-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 14px;
+}
+
+.measurement-table-card header,
+.trend-card h2 {
+  margin-bottom: 12px;
+}
+
+.measurement-table-scroll {
+  overflow: auto;
+}
+
+.measurement-table {
+  border-collapse: collapse;
+  min-width: 920px;
+  width: 100%;
+}
+
+.measurement-table th {
+  background: #303943;
+  color: #fff;
+  font-size: 12px;
+  padding: 8px;
+  text-align: center;
+}
+
+.measurement-table td {
+  border: 1px solid #e3e7eb;
+  font-size: 12px;
+  padding: 6px 8px;
+  text-align: center;
+}
+
+.measurement-table td:first-child,
+.measurement-table th:first-child {
+  text-align: left;
+}
+
+.measurement-table td:nth-child(4) {
+  background: #c7ead8;
+  font-weight: 700;
+}
+
+.trend-svg {
+  display: block;
+  height: auto;
+  width: 100%;
+}
+
+.target-line {
+  stroke: #22a447;
+  stroke-width: 2;
+}
+
+.target-label {
+  fill: #22a447;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.trend-line {
+  fill: none;
+  stroke: #6c4bc1;
+  stroke-width: 3;
+}
+
+.trend-point {
+  fill: #6c4bc1;
+}
+
+.trend-value {
+  fill: #6c4bc1;
+  font-size: 14px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.trend-x {
+  fill: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
 .review-stage {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -788,6 +934,10 @@ select {
 
   .layout-grid,
   .work-header {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-actions {
     grid-template-columns: 1fr;
   }
 

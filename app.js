@@ -1,16 +1,23 @@
 const STORAGE_KEY = "obra-mvp1-state-v2";
 const FLOOR_CHECK_KEY = "__floor__";
+const SUPABASE_ENABLED = Boolean(window.supabase && window.SUPABASE_CONFIG);
+const supabaseClient = SUPABASE_ENABLED
+  ? window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey)
+  : null;
 
 const initialState = {
   projectName: "",
   builderName: "",
   projectLocation: "",
   updatedAt: "",
+  targetDeliveryDate: "",
+  forecastFinishDate: "",
   builderLogo: "",
   projectPhoto: "",
   floors: [],
   stages: [],
-  checks: {}
+  checks: {},
+  measurements: []
 };
 
 let state = loadState();
@@ -20,16 +27,38 @@ let draggedFloorId = "";
 let draggedStageId = "";
 let stageSlideDirection = "";
 let touchStartX = 0;
+let currentUser = null;
+let currentProjectId = "";
+let remoteReady = false;
+let suppressRealtimeReload = false;
+let realtimeChannel = null;
+let saveProjectTimer = null;
+const saveStageTimers = new Map();
+const saveFloorTimers = new Map();
 
 const elements = {
+  authView: document.querySelector("#authView"),
+  appContent: document.querySelectorAll(".app-content"),
+  loginForm: document.querySelector("#loginForm"),
+  loginEmail: document.querySelector("#loginEmail"),
+  loginPassword: document.querySelector("#loginPassword"),
+  loginButton: document.querySelector("#loginButton"),
+  signupButton: document.querySelector("#signupButton"),
+  logoutButton: document.querySelector("#logoutButton"),
+  userEmail: document.querySelector("#userEmail"),
+  authMessage: document.querySelector("#authMessage"),
   tabs: document.querySelectorAll(".tab"),
   setupView: document.querySelector("#setupView"),
   trackingView: document.querySelector("#trackingView"),
   reviewView: document.querySelector("#reviewView"),
+  measurementsView: document.querySelector("#measurementsView"),
   projectName: document.querySelector("#projectName"),
   builderName: document.querySelector("#builderName"),
   projectLocation: document.querySelector("#projectLocation"),
   updatedAt: document.querySelector("#updatedAt"),
+  targetDeliveryDate: document.querySelector("#targetDeliveryDate"),
+  forecastFinishDate: document.querySelector("#forecastFinishDate"),
+  uploadMeasurement: document.querySelector("#uploadMeasurement"),
   builderLogo: document.querySelector("#builderLogo"),
   projectPhoto: document.querySelector("#projectPhoto"),
   builderLogoPreview: document.querySelector("#builderLogoPreview"),
@@ -50,14 +79,24 @@ const elements = {
   trackingMatrix: document.querySelector("#trackingMatrix"),
   summaryStrip: document.querySelector("#summaryStrip"),
   reviewGrid: document.querySelector("#reviewGrid"),
+  measurementReport: document.querySelector("#measurementReport"),
+  trendReport: document.querySelector("#trendReport"),
   exportButton: document.querySelector("#exportButton"),
   importFile: document.querySelector("#importFile")
 };
 
 wireEvents();
-render();
+initApp();
 
 function wireEvents() {
+  elements.loginForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await signIn();
+  });
+
+  elements.signupButton.addEventListener("click", signUp);
+  elements.logoutButton.addEventListener("click", signOut);
+
   elements.tabs.forEach((tab) => {
     tab.addEventListener("click", () => {
       activeView = tab.dataset.view;
@@ -67,34 +106,51 @@ function wireEvents() {
 
   elements.projectName.addEventListener("input", () => {
     state.projectName = elements.projectName.value;
+    queueSaveProject();
     saveAndRender(false);
   });
 
   elements.builderName.addEventListener("input", () => {
     state.builderName = elements.builderName.value;
+    queueSaveProject();
     saveAndRender(false);
   });
 
   elements.projectLocation.addEventListener("input", () => {
     state.projectLocation = elements.projectLocation.value;
+    queueSaveProject();
+    saveAndRender(false);
+  });
+
+  elements.targetDeliveryDate.addEventListener("input", () => {
+    state.targetDeliveryDate = elements.targetDeliveryDate.value;
+    queueSaveProject();
     saveAndRender(false);
   });
 
   elements.updatedAt.addEventListener("input", () => {
     state.updatedAt = elements.updatedAt.value;
+    queueSaveProject();
+    saveAndRender(false);
+  });
+
+  elements.forecastFinishDate.addEventListener("input", () => {
+    state.forecastFinishDate = elements.forecastFinishDate.value;
     saveAndRender(false);
   });
 
   elements.builderLogo.addEventListener("change", (event) => {
-    readImageFile(event, (dataUrl) => {
-      state.builderLogo = dataUrl;
+    readImageFile(event, async (dataUrl, file) => {
+      state.builderLogo = await uploadProjectAsset(file, "logo") || dataUrl;
+      await saveProject();
       saveAndRender();
     });
   });
 
   elements.projectPhoto.addEventListener("change", (event) => {
-    readImageFile(event, (dataUrl) => {
-      state.projectPhoto = dataUrl;
+    readImageFile(event, async (dataUrl, file) => {
+      state.projectPhoto = await uploadProjectAsset(file, "photo") || dataUrl;
+      await saveProject();
       saveAndRender();
     });
   });
@@ -114,6 +170,7 @@ function wireEvents() {
 
   elements.previousStage.addEventListener("click", () => moveStage(-1));
   elements.nextStage.addEventListener("click", () => moveStage(1));
+  elements.uploadMeasurement.addEventListener("click", uploadMeasurement);
 
   elements.exportButton.addEventListener("click", exportState);
   elements.importFile.addEventListener("change", importState);
@@ -130,7 +187,366 @@ function wireEvents() {
   });
 }
 
-function addFloorRowsFromMatrix() {
+async function initApp() {
+  if (!SUPABASE_ENABLED) {
+    remoteReady = false;
+    showApp();
+    render();
+    return;
+  }
+
+  const { data } = await supabaseClient.auth.getSession();
+  currentUser = data.session?.user || null;
+
+  supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+    currentUser = session?.user || null;
+    if (currentUser) {
+      await loadRemoteWorkspace();
+    } else {
+      showLogin();
+    }
+  });
+
+  if (currentUser) {
+    await loadRemoteWorkspace();
+  } else {
+    showLogin();
+  }
+}
+
+function showLogin(message = "") {
+  remoteReady = false;
+  elements.authView.classList.add("active");
+  elements.appContent.forEach((item) => item.classList.add("hidden"));
+  elements.logoutButton.classList.add("hidden");
+  elements.userEmail.textContent = "";
+  elements.authMessage.textContent = message;
+}
+
+function showApp() {
+  elements.authView.classList.remove("active");
+  elements.appContent.forEach((item) => item.classList.remove("hidden"));
+  elements.logoutButton.classList.toggle("hidden", !currentUser);
+  elements.userEmail.textContent = currentUser?.email || "";
+}
+
+async function signIn() {
+  if (!SUPABASE_ENABLED) return;
+  setAuthMessage("Entrando...");
+  const { error } = await supabaseClient.auth.signInWithPassword({
+    email: elements.loginEmail.value.trim(),
+    password: elements.loginPassword.value
+  });
+
+  if (error) {
+    setAuthMessage(error.message);
+    return;
+  }
+
+  setAuthMessage("");
+}
+
+async function signUp() {
+  if (!SUPABASE_ENABLED) return;
+  setAuthMessage("Criando acesso...");
+  const { error } = await supabaseClient.auth.signUp({
+    email: elements.loginEmail.value.trim(),
+    password: elements.loginPassword.value
+  });
+
+  if (error) {
+    setAuthMessage(error.message);
+    return;
+  }
+
+  setAuthMessage("Acesso criado. Se o Supabase pedir confirmação, verifique o e-mail.");
+}
+
+async function signOut() {
+  if (!SUPABASE_ENABLED) return;
+  await supabaseClient.auth.signOut();
+}
+
+function setAuthMessage(message) {
+  elements.authMessage.textContent = message;
+}
+
+async function loadRemoteWorkspace() {
+  if (!SUPABASE_ENABLED || !currentUser) return;
+
+  showApp();
+  remoteReady = false;
+
+  let project = await fetchFirstProject();
+  if (!project) {
+    project = await createBlankProject();
+  }
+
+  currentProjectId = project.id;
+
+  const [{ data: floors }, { data: stages }, { data: progressRows }, { data: measurements }, { data: measurementTotals }] = await Promise.all([
+    supabaseClient.from("floors").select("*").eq("project_id", currentProjectId).order("sort_order"),
+    supabaseClient.from("stages").select("*").eq("project_id", currentProjectId).order("sort_order"),
+    supabaseClient.from("progress").select("*").eq("project_id", currentProjectId),
+    supabaseClient.from("measurements").select("*").eq("project_id", currentProjectId).order("sort_order"),
+    supabaseClient.from("measurement_stage_totals").select("*").eq("project_id", currentProjectId)
+  ]);
+
+  state = {
+    projectName: project.name || "",
+    builderName: project.builder_name || "",
+    projectLocation: project.location || "",
+    updatedAt: project.updated_at ? toDateTimeInputValue(new Date(project.updated_at)) : "",
+    targetDeliveryDate: project.target_delivery_date || "",
+    forecastFinishDate: state.forecastFinishDate || "",
+    builderLogo: project.logo_url || "",
+    projectPhoto: project.photo_url || "",
+    floors: (floors || []).map((floor) => ({
+      id: floor.id,
+      name: floor.name,
+      units: generateUnitList(floor.unit_count)
+    })),
+    stages: (stages || []).map((stage) => normalizeStage({
+      id: stage.id,
+      name: stage.name,
+      trackingLevel: stage.tracking_level
+    })),
+    checks: buildChecks(progressRows || []),
+    measurements: buildMeasurements(measurements || [], measurementTotals || [])
+  };
+
+  activeStageId = state.stages[0]?.id || "";
+  remoteReady = true;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  subscribeToRealtime();
+  render();
+}
+
+async function fetchFirstProject() {
+  const { data, error } = await supabaseClient
+    .from("projects")
+    .select("*")
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error(error);
+    return null;
+  }
+
+  return data;
+}
+
+async function createBlankProject() {
+  const { data, error } = await supabaseClient
+    .from("projects")
+    .insert({
+      name: "",
+      builder_name: "",
+      location: ""
+    })
+    .select("*")
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+function buildChecks(progressRows) {
+  const checks = {};
+
+  progressRows.forEach((row) => {
+    if (!checks[row.stage_id]) checks[row.stage_id] = {};
+    if (!checks[row.stage_id][row.floor_id]) checks[row.stage_id][row.floor_id] = {};
+    checks[row.stage_id][row.floor_id][row.unit_label] = row.done;
+  });
+
+  return checks;
+}
+
+function buildMeasurements(measurements, totals) {
+  const totalsByMeasurement = new Map();
+
+  totals.forEach((total) => {
+    if (!totalsByMeasurement.has(total.measurement_id)) {
+      totalsByMeasurement.set(total.measurement_id, {});
+    }
+    totalsByMeasurement.get(total.measurement_id)[total.stage_id] = {
+      completed: total.completed_count,
+      total: total.total_count
+    };
+  });
+
+  return measurements.map((measurement) => ({
+    id: measurement.id,
+    label: measurement.label,
+    measuredAt: measurement.measured_at,
+    forecastFinishDate: measurement.forecast_finish_date || "",
+    sortOrder: measurement.sort_order,
+    totals: totalsByMeasurement.get(measurement.id) || {}
+  }));
+}
+
+function subscribeToRealtime() {
+  if (!SUPABASE_ENABLED || !currentProjectId) return;
+  if (realtimeChannel) supabaseClient.removeChannel(realtimeChannel);
+
+  realtimeChannel = supabaseClient
+    .channel(`project-${currentProjectId}`)
+    .on("postgres_changes", { event: "*", schema: "public", table: "projects" }, reloadFromRealtime)
+    .on("postgres_changes", { event: "*", schema: "public", table: "floors" }, reloadFromRealtime)
+    .on("postgres_changes", { event: "*", schema: "public", table: "stages" }, reloadFromRealtime)
+    .on("postgres_changes", { event: "*", schema: "public", table: "progress" }, reloadFromRealtime)
+    .on("postgres_changes", { event: "*", schema: "public", table: "measurements" }, reloadFromRealtime)
+    .on("postgres_changes", { event: "*", schema: "public", table: "measurement_stage_totals" }, reloadFromRealtime)
+    .subscribe();
+}
+
+async function reloadFromRealtime() {
+  if (suppressRealtimeReload) return;
+  await loadRemoteWorkspace();
+}
+
+async function withRealtimeSuppressed(action) {
+  suppressRealtimeReload = true;
+  try {
+    return await action();
+  } finally {
+    window.setTimeout(() => {
+      suppressRealtimeReload = false;
+    }, 250);
+  }
+}
+
+function queueSaveProject() {
+  if (!remoteReady || !currentProjectId) return;
+  window.clearTimeout(saveProjectTimer);
+  saveProjectTimer = window.setTimeout(saveProject, 450);
+}
+
+async function saveProject() {
+  if (!remoteReady || !currentProjectId) return;
+
+  await withRealtimeSuppressed(async () => {
+    const { error } = await supabaseClient
+      .from("projects")
+      .update({
+        name: state.projectName,
+        builder_name: state.builderName,
+        location: state.projectLocation,
+        logo_url: state.builderLogo || null,
+        photo_url: state.projectPhoto || null,
+        updated_at: state.updatedAt ? new Date(state.updatedAt).toISOString() : null,
+        target_delivery_date: state.targetDeliveryDate || null
+      })
+      .eq("id", currentProjectId);
+
+    if (error) console.error(error);
+  });
+}
+
+async function uploadProjectAsset(file, kind) {
+  if (!remoteReady || !currentProjectId || !file) return "";
+
+  const extension = file.name.split(".").pop() || "png";
+  const path = `${currentProjectId}/${kind}-${Date.now()}.${extension}`;
+  const { error } = await supabaseClient.storage
+    .from("project-assets")
+    .upload(path, file, { upsert: true });
+
+  if (error) {
+    console.error(error);
+    return "";
+  }
+
+  const { data } = supabaseClient.storage.from("project-assets").getPublicUrl(path);
+  return data.publicUrl;
+}
+
+function queueSaveStage(stageId) {
+  if (!remoteReady || !currentProjectId) return;
+  window.clearTimeout(saveStageTimers.get(stageId));
+  saveStageTimers.set(stageId, window.setTimeout(() => saveStageRemote(stageId), 450));
+}
+
+async function saveStageRemote(stageId) {
+  const stage = state.stages.find((item) => item.id === stageId);
+  if (!remoteReady || !stage) return;
+
+  await withRealtimeSuppressed(async () => {
+    const { error } = await supabaseClient
+      .from("stages")
+      .update({
+        name: stage.name,
+        tracking_level: stage.trackingLevel === "floor" ? "floor" : "unit"
+      })
+      .eq("id", stageId);
+    if (error) console.error(error);
+  });
+}
+
+function queueSaveFloor(floorId) {
+  if (!remoteReady || !currentProjectId) return;
+  window.clearTimeout(saveFloorTimers.get(floorId));
+  saveFloorTimers.set(floorId, window.setTimeout(() => saveFloorRemote(floorId), 450));
+}
+
+async function saveFloorRemote(floorId) {
+  const floor = state.floors.find((item) => item.id === floorId);
+  if (!remoteReady || !floor) return;
+
+  await withRealtimeSuppressed(async () => {
+    const { error } = await supabaseClient
+      .from("floors")
+      .update({
+        name: floor.name,
+        unit_count: floor.units.length
+      })
+      .eq("id", floorId);
+    if (error) console.error(error);
+  });
+}
+
+async function deleteStageRemote(stageId) {
+  if (!remoteReady) return;
+  await withRealtimeSuppressed(async () => {
+    const { error } = await supabaseClient.from("stages").delete().eq("id", stageId);
+    if (error) console.error(error);
+  });
+}
+
+async function deleteFloorRemote(floorId) {
+  if (!remoteReady) return;
+  await withRealtimeSuppressed(async () => {
+    const { error } = await supabaseClient.from("floors").delete().eq("id", floorId);
+    if (error) console.error(error);
+  });
+}
+
+async function persistStageOrder() {
+  if (!remoteReady) return;
+  await withRealtimeSuppressed(async () => {
+    const updates = state.stages.map((stage, index) => (
+      supabaseClient.from("stages").update({ sort_order: index }).eq("id", stage.id)
+    ));
+    const results = await Promise.all(updates);
+    results.forEach(({ error }) => error && console.error(error));
+  });
+}
+
+async function persistFloorOrder() {
+  if (!remoteReady) return;
+  await withRealtimeSuppressed(async () => {
+    const updates = state.floors.map((floor, index) => (
+      supabaseClient.from("floors").update({ sort_order: index }).eq("id", floor.id)
+    ));
+    const results = await Promise.all(updates);
+    results.forEach(({ error }) => error && console.error(error));
+  });
+}
+
+async function addFloorRowsFromMatrix() {
   const name = elements.floorMatrixName.value.trim();
   const unitCount = Number(elements.floorMatrixUnits.value);
   const repeatCount = Number(elements.floorMatrixRepeat.value);
@@ -143,18 +559,59 @@ function addFloorRowsFromMatrix() {
     units: generateUnitList(unitCount)
   })).reverse();
 
+  if (remoteReady && currentProjectId) {
+    const startOrder = state.floors.length;
+    const rows = newFloors.map((floor, index) => ({
+      project_id: currentProjectId,
+      name: floor.name,
+      unit_count: floor.units.length,
+      sort_order: startOrder + index
+    }));
+
+    await withRealtimeSuppressed(async () => {
+      const { error } = await supabaseClient.from("floors").insert(rows);
+      if (error) console.error(error);
+    });
+    await loadRemoteWorkspace();
+    return;
+  }
+
   state.floors.push(...newFloors);
   saveAndRender();
 }
 
-function addStageFromInput() {
+async function addStageFromInput() {
   const name = elements.stageName.value.trim();
   if (!name) return;
 
   const stage = { id: crypto.randomUUID(), name, trackingLevel: "unit" };
+  elements.stageName.value = "";
+
+  if (remoteReady && currentProjectId) {
+    await withRealtimeSuppressed(async () => {
+      const { data, error } = await supabaseClient
+        .from("stages")
+        .insert({
+          project_id: currentProjectId,
+          name,
+          tracking_level: "unit",
+          sort_order: state.stages.length
+        })
+        .select("id")
+        .single();
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+      activeStageId = data.id;
+    });
+    await loadRemoteWorkspace();
+    return;
+  }
+
   state.stages.push(stage);
   activeStageId = stage.id;
-  elements.stageName.value = "";
   saveAndRender();
 }
 
@@ -179,11 +636,14 @@ function render() {
   elements.setupView.classList.toggle("active", activeView === "setup");
   elements.trackingView.classList.toggle("active", activeView === "tracking");
   elements.reviewView.classList.toggle("active", activeView === "review");
+  elements.measurementsView.classList.toggle("active", activeView === "measurements");
 
   elements.projectName.value = state.projectName;
   elements.builderName.value = state.builderName;
   elements.projectLocation.value = state.projectLocation;
   elements.updatedAt.value = state.updatedAt;
+  elements.targetDeliveryDate.value = state.targetDeliveryDate;
+  elements.forecastFinishDate.value = state.forecastFinishDate;
   renderImagePreview(elements.builderLogoPreview, state.builderLogo);
   renderImagePreview(elements.projectPhotoPreview, state.projectPhoto);
 
@@ -196,6 +656,7 @@ function render() {
   renderStageSelect();
   renderTrackingMatrix();
   renderReview();
+  renderMeasurements();
 }
 
 function renderStages() {
@@ -210,6 +671,7 @@ function renderStages() {
     row.addEventListener("drop", (event) => {
       event.preventDefault();
       reorderById(state.stages, draggedStageId, stage.id);
+      persistStageOrder();
       saveAndRender();
     });
 
@@ -242,6 +704,7 @@ function renderStages() {
     nameInput.setAttribute("aria-label", "Nome da etapa");
     nameInput.addEventListener("input", () => {
       stage.name = nameInput.value;
+      queueSaveStage(stage.id);
       saveAndRender(false);
     });
 
@@ -253,6 +716,7 @@ function renderStages() {
     controlInput.checked = isFloorControlled(stage.id);
     controlInput.addEventListener("change", () => {
       stage.trackingLevel = controlInput.checked ? "floor" : "unit";
+      queueSaveStage(stage.id);
       saveAndRender();
     });
 
@@ -269,6 +733,7 @@ function renderStages() {
     remove.addEventListener("click", () => {
       state.stages = state.stages.filter((item) => item.id !== stage.id);
       delete state.checks[stage.id];
+      deleteStageRemote(stage.id);
       saveAndRender();
     });
 
@@ -289,6 +754,7 @@ function renderFloors() {
     row.addEventListener("drop", (event) => {
       event.preventDefault();
       reorderById(state.floors, draggedFloorId, floor.id);
+      persistFloorOrder();
       saveAndRender();
     });
 
@@ -317,6 +783,7 @@ function renderFloors() {
     nameInput.setAttribute("aria-label", "Nome do pavimento");
     nameInput.addEventListener("input", () => {
       floor.name = nameInput.value;
+      queueSaveFloor(floor.id);
       saveAndRender(false);
     });
 
@@ -334,6 +801,7 @@ function renderFloors() {
       floor.units = generateUnitList(count);
       pruneChecksForFloor(floor.id, floor.units);
       preview.textContent = floor.units.join(", ");
+      queueSaveFloor(floor.id);
       saveAndRender(false);
     });
 
@@ -350,6 +818,7 @@ function renderFloors() {
     remove.addEventListener("click", () => {
       state.floors = state.floors.filter((item) => item.id !== floor.id);
       removeChecksForFloor(floor.id);
+      deleteFloorRemote(floor.id);
       saveAndRender();
     });
 
@@ -499,6 +968,195 @@ function renderReview() {
   });
 }
 
+async function uploadMeasurement() {
+  if (!remoteReady || !currentProjectId) {
+    alert("Faça login para subir a medição.");
+    return;
+  }
+
+  if (state.stages.length === 0) {
+    alert("Cadastre etapas antes de subir a medição.");
+    return;
+  }
+
+  const sortOrder = state.measurements.length;
+  const label = `M${String(sortOrder + 1).padStart(2, "0")}`;
+  const measuredAt = state.updatedAt ? state.updatedAt.slice(0, 10) : toDateInputValue(new Date());
+
+  await withRealtimeSuppressed(async () => {
+    const { data: measurement, error } = await supabaseClient
+      .from("measurements")
+      .insert({
+        project_id: currentProjectId,
+        label,
+        measured_at: measuredAt,
+        forecast_finish_date: state.forecastFinishDate || null,
+        sort_order: sortOrder,
+        created_by: currentUser?.id || null
+      })
+      .select("id")
+      .single();
+
+    if (error) {
+      console.error(error);
+      alert("Não foi possível subir a medição.");
+      return;
+    }
+
+    const totals = state.stages.map((stage) => {
+      const progress = calculateProgress(stage.id);
+      return {
+        measurement_id: measurement.id,
+        project_id: currentProjectId,
+        stage_id: stage.id,
+        completed_count: progress.done,
+        total_count: progress.total
+      };
+    });
+
+    const { error: totalsError } = await supabaseClient
+      .from("measurement_stage_totals")
+      .insert(totals);
+
+    if (totalsError) {
+      console.error(totalsError);
+      alert("A medição foi criada, mas os totais não foram salvos.");
+    }
+  });
+
+  await loadRemoteWorkspace();
+  activeView = "measurements";
+  render();
+}
+
+function renderMeasurements() {
+  elements.measurementReport.innerHTML = "";
+  elements.trendReport.innerHTML = "";
+
+  renderMeasurementTable();
+  renderTrendChart();
+}
+
+function renderMeasurementTable() {
+  const tableWrap = document.createElement("article");
+  tableWrap.className = "measurement-table-card";
+
+  const header = document.createElement("header");
+  const title = document.createElement("h2");
+  title.textContent = "Unidades concluídas por medição";
+  header.append(title);
+  tableWrap.append(header);
+
+  const scroller = document.createElement("div");
+  scroller.className = "measurement-table-scroll";
+
+  const table = document.createElement("table");
+  table.className = "measurement-table";
+
+  const thead = document.createElement("thead");
+  const headRow = document.createElement("tr");
+  ["Serviços", "Unidade", "Qtd. total", "Atual", ...state.measurements.map(formatMeasurementHeader)].forEach((label) => {
+    const th = document.createElement("th");
+    th.textContent = label;
+    headRow.append(th);
+  });
+  thead.append(headRow);
+
+  const tbody = document.createElement("tbody");
+  state.stages.forEach((stage) => {
+    const progress = calculateProgress(stage.id);
+    const row = document.createElement("tr");
+    const unitLabel = isFloorControlled(stage.id) ? "PAV." : "APTO";
+
+    [stage.name, unitLabel, progress.total, progress.done].forEach((value) => {
+      const td = document.createElement("td");
+      td.textContent = value;
+      row.append(td);
+    });
+
+    state.measurements.forEach((measurement, index) => {
+      const previous = index === 0 ? 0 : (state.measurements[index - 1].totals[stage.id]?.completed || 0);
+      const current = measurement.totals[stage.id]?.completed || 0;
+      const delta = Math.max(0, current - previous);
+      const td = document.createElement("td");
+      td.textContent = delta > 0 ? String(delta) : "";
+      row.append(td);
+    });
+
+    tbody.append(row);
+  });
+
+  table.append(thead, tbody);
+  scroller.append(table);
+  tableWrap.append(scroller);
+  elements.measurementReport.append(tableWrap);
+}
+
+function renderTrendChart() {
+  const card = document.createElement("article");
+  card.className = "trend-card";
+
+  const title = document.createElement("h2");
+  title.textContent = "Variação de Tendência para Término";
+  card.append(title);
+
+  const points = state.measurements
+    .filter((measurement) => measurement.forecastFinishDate)
+    .map((measurement) => ({
+      label: formatShortDate(measurement.measuredAt),
+      date: measurement.forecastFinishDate,
+      time: new Date(`${measurement.forecastFinishDate}T00:00:00`).getTime()
+    }));
+
+  if (points.length === 0 || !state.targetDeliveryDate) {
+    const empty = document.createElement("p");
+    empty.className = "empty-note";
+    empty.textContent = "Informe a meta de entrega e suba medições com término atualizado para visualizar o gráfico.";
+    card.append(empty);
+    elements.trendReport.append(card);
+    return;
+  }
+
+  const targetTime = new Date(`${state.targetDeliveryDate}T00:00:00`).getTime();
+  const values = [...points.map((point) => point.time), targetTime];
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const padding = Math.max(1, (max - min) * 0.15);
+  const minY = min - padding;
+  const maxY = max + padding;
+  const width = 900;
+  const height = 300;
+  const left = 70;
+  const right = 28;
+  const top = 28;
+  const bottom = 54;
+  const innerWidth = width - left - right;
+  const innerHeight = height - top - bottom;
+  const xFor = (index) => left + (points.length === 1 ? innerWidth / 2 : (innerWidth * index) / (points.length - 1));
+  const yFor = (time) => top + innerHeight - ((time - minY) / (maxY - minY)) * innerHeight;
+  const path = points.map((point, index) => `${index === 0 ? "M" : "L"} ${xFor(index)} ${yFor(point.time)}`).join(" ");
+  const targetY = yFor(targetTime);
+
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  svg.classList.add("trend-svg");
+
+  svg.innerHTML = `
+    <line x1="${left}" y1="${targetY}" x2="${width - right}" y2="${targetY}" class="target-line" />
+    <text x="${left + 12}" y="${targetY - 8}" class="target-label">META</text>
+    <text x="${width - right - 92}" y="${targetY - 8}" class="target-label">${formatShortDate(state.targetDeliveryDate)}</text>
+    <path d="${path}" class="trend-line" />
+    ${points.map((point, index) => `
+      <circle cx="${xFor(index)}" cy="${yFor(point.time)}" r="4" class="trend-point" />
+      <text x="${xFor(index)}" y="${yFor(point.time) - 10}" class="trend-value">${daysBetween(state.targetDeliveryDate, point.date)}</text>
+      <text x="${xFor(index)}" y="${height - 18}" class="trend-x">${point.label}</text>
+    `).join("")}
+  `;
+
+  card.append(svg);
+  elements.trendReport.append(card);
+}
+
 function renderReportHeader() {
   const report = document.createElement("article");
   report.className = "report-header";
@@ -596,11 +1254,32 @@ function toggleCheck(stageId, floorId, unit) {
   if (!state.checks[stageId]) state.checks[stageId] = {};
   if (!state.checks[stageId][floorId]) state.checks[stageId][floorId] = {};
   state.checks[stageId][floorId][unit] = !state.checks[stageId][floorId][unit];
+  saveProgressRemote(stageId, floorId, unit, state.checks[stageId][floorId][unit]);
   saveAndRender();
 }
 
 function isChecked(stageId, floorId, unit) {
   return Boolean(state.checks[stageId]?.[floorId]?.[unit]);
+}
+
+async function saveProgressRemote(stageId, floorId, unit, done) {
+  if (!remoteReady || !currentProjectId || !stageId || !floorId || !unit) return;
+
+  await withRealtimeSuppressed(async () => {
+    const { error } = await supabaseClient
+      .from("progress")
+      .upsert({
+        project_id: currentProjectId,
+        stage_id: stageId,
+        floor_id: floorId,
+        unit_label: unit,
+        done,
+        updated_by: currentUser?.id || null,
+        updated_at: new Date().toISOString()
+      }, { onConflict: "stage_id,floor_id,unit_label" });
+
+    if (error) console.error(error);
+  });
 }
 
 function calculateProgress(stageId) {
@@ -708,7 +1387,7 @@ function readImageFile(event, onLoad) {
 
   const reader = new FileReader();
   reader.addEventListener("load", () => {
-    onLoad(String(reader.result));
+    onLoad(String(reader.result), file);
   });
   reader.readAsDataURL(file);
   event.target.value = "";
@@ -757,11 +1436,14 @@ function loadState() {
       builderName: parsed.builderName || initialState.builderName,
       projectLocation: parsed.projectLocation || initialState.projectLocation,
       updatedAt: parsed.updatedAt || initialState.updatedAt,
+      targetDeliveryDate: parsed.targetDeliveryDate || initialState.targetDeliveryDate,
+      forecastFinishDate: parsed.forecastFinishDate || initialState.forecastFinishDate,
       builderLogo: parsed.builderLogo || initialState.builderLogo,
       projectPhoto: parsed.projectPhoto || initialState.projectPhoto,
       floors: Array.isArray(parsed.floors) ? parsed.floors : initialState.floors,
       stages: Array.isArray(parsed.stages) ? parsed.stages.map(normalizeStage) : initialState.stages,
-      checks: parsed.checks || {}
+      checks: parsed.checks || {},
+      measurements: Array.isArray(parsed.measurements) ? parsed.measurements : initialState.measurements
     };
   } catch {
     return initialState;
@@ -799,11 +1481,14 @@ function importState(event) {
         builderName: imported.builderName || "",
         projectLocation: imported.projectLocation || "",
         updatedAt: imported.updatedAt || "",
+        targetDeliveryDate: imported.targetDeliveryDate || "",
+        forecastFinishDate: imported.forecastFinishDate || "",
         builderLogo: imported.builderLogo || "",
         projectPhoto: imported.projectPhoto || "",
         floors: Array.isArray(imported.floors) ? imported.floors : [],
         stages: Array.isArray(imported.stages) ? imported.stages.map(normalizeStage) : [],
-        checks: imported.checks || {}
+        checks: imported.checks || {},
+        measurements: Array.isArray(imported.measurements) ? imported.measurements : []
       };
       activeStageId = state.stages[0]?.id || "";
       saveAndRender();
@@ -833,10 +1518,40 @@ function formatDateTime(value) {
   }).format(date);
 }
 
+function formatMeasurementHeader(measurement) {
+  return `${measurement.label} - ${formatShortDate(measurement.measuredAt)}`;
+}
+
+function formatShortDate(value) {
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return value || "";
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  }).format(date);
+}
+
+function daysBetween(targetDate, forecastDate) {
+  if (!targetDate || !forecastDate) return "";
+  const target = new Date(`${targetDate}T00:00:00`);
+  const forecast = new Date(`${forecastDate}T00:00:00`);
+  if (Number.isNaN(target.getTime()) || Number.isNaN(forecast.getTime())) return "";
+
+  return Math.round((forecast - target) / (1000 * 60 * 60 * 24));
+}
+
 function toDateTimeInputValue(date) {
   const offset = date.getTimezoneOffset();
   const local = new Date(date.getTime() - offset * 60 * 1000);
   return local.toISOString().slice(0, 16);
+}
+
+function toDateInputValue(date) {
+  const offset = date.getTimezoneOffset();
+  const local = new Date(date.getTime() - offset * 60 * 1000);
+  return local.toISOString().slice(0, 10);
 }
 
 function slugify(value) {

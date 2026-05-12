@@ -14,19 +14,44 @@
           <h1>Gestão de Obra</h1>
         </div>
         <div class="topbar-actions">
+          <span class="user-pill" id="userEmail"></span>
+          <button class="ghost-button" id="logoutButton" type="button">Sair</button>
           <button class="ghost-button" id="exportButton" type="button">Exportar</button>
           <label class="ghost-button file-button" for="importFile">Importar</label>
           <input id="importFile" type="file" accept="application/json" />
         </div>
       </header>
 
-      <nav class="tabs" aria-label="Navegação principal">
+      <section class="auth-view" id="authView">
+        <form class="auth-panel" id="loginForm">
+          <div>
+            <p class="eyebrow">Acesso</p>
+            <h2>Entrar no sistema</h2>
+          </div>
+          <label class="field">
+            <span>E-mail</span>
+            <input id="loginEmail" type="email" autocomplete="email" required />
+          </label>
+          <label class="field">
+            <span>Senha</span>
+            <input id="loginPassword" type="password" autocomplete="current-password" required />
+          </label>
+          <div class="auth-actions">
+            <button class="primary-button" id="loginButton" type="submit">Entrar</button>
+            <button class="ghost-button" id="signupButton" type="button">Criar acesso</button>
+          </div>
+          <p class="auth-message" id="authMessage"></p>
+        </form>
+      </section>
+
+      <nav class="tabs app-content" aria-label="Navegação principal">
         <button class="tab active" data-view="setup" type="button">Configuração</button>
         <button class="tab" data-view="tracking" type="button">Apontamento</button>
         <button class="tab" data-view="review" type="button">Conferência</button>
+        <button class="tab" data-view="measurements" type="button">Medições</button>
       </nav>
 
-      <main>
+      <main class="app-content">
         <section class="view active setup-view" id="setupView">
           <section class="config-hero">
             <div>
@@ -52,6 +77,10 @@
                 <label class="field">
                   <span>Local</span>
                   <input id="projectLocation" class="grid-input wide-input" data-grid="project" data-row="1" data-col="0" type="text" />
+                </label>
+                <label class="field">
+                  <span>Meta de entrega</span>
+                  <input id="targetDeliveryDate" class="grid-input" data-grid="project" data-row="2" data-col="0" type="date" />
                 </label>
               </div>
               <div class="asset-grid">
@@ -135,6 +164,10 @@
               <span>Atualização</span>
               <input id="updatedAt" type="datetime-local" />
             </label>
+            <label class="field">
+              <span>Término atualizado</span>
+              <input id="forecastFinishDate" type="date" />
+            </label>
             <div class="stage-buttons">
               <button class="ghost-button square-button" id="previousStage" type="button" title="Etapa anterior">&lt;</button>
               <button class="ghost-button square-button" id="nextStage" type="button" title="Próxima etapa">&gt;</button>
@@ -143,6 +176,7 @@
               <strong id="trackingPercent">0,0%</strong>
               <span id="trackingCount">0 de 0 unidades</span>
             </div>
+            <button class="primary-button upload-measurement-button" id="uploadMeasurement" type="button">SUBIR MEDI&Ccedil;&Atilde;O</button>
           </section>
 
           <section class="matrix-wrap">
@@ -154,9 +188,16 @@
           <section class="summary-strip" id="summaryStrip"></section>
           <section class="review-grid" id="reviewGrid"></section>
         </section>
+
+        <section class="view" id="measurementsView">
+          <section class="measurement-report" id="measurementReport"></section>
+          <section class="trend-report" id="trendReport"></section>
+        </section>
       </main>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
