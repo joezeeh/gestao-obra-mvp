@@ -41,7 +41,7 @@ button {
 .workspace {
   align-items: start;
   display: grid;
-  grid-template-columns: 142px minmax(0, 1fr);
+  grid-template-columns: 188px minmax(0, 1fr);
   min-height: calc(100vh - 72px);
 }
 
@@ -161,14 +161,19 @@ h2 {
   border-radius: 7px;
   color: #f2f7fb;
   display: grid;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   gap: 8px;
-  grid-template-columns: 24px 1fr;
+  grid-template-columns: 24px minmax(0, 1fr);
   min-height: 40px;
   padding: 0 10px;
   text-align: left;
   white-space: nowrap;
+}
+
+.tab span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tab.active {
@@ -310,7 +315,7 @@ select {
 
 .floor-entry-inline {
   align-items: end;
-  grid-template-columns: minmax(130px, 1fr) 96px 96px 38px;
+  grid-template-columns: minmax(130px, 1fr) 96px 96px 42px;
 }
 
 .floor-entry-inline .field {
@@ -318,8 +323,8 @@ select {
 }
 
 .floor-entry-inline .icon-button {
-  min-height: 38px;
-  min-width: 38px;
+  min-height: 42px;
+  min-width: 42px;
 }
 
 .project-grid {
@@ -350,8 +355,26 @@ select {
   font-weight: 700;
 }
 
-.asset-uploader input {
-  min-height: 38px;
+.asset-uploader input[type="file"] {
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  width: 1px;
+}
+
+.asset-file-action {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #c8d0d9;
+  border-radius: 6px;
+  color: var(--text) !important;
+  cursor: pointer;
+  display: inline-flex;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 12px;
+  width: max-content;
 }
 
 .asset-uploader img {
@@ -452,6 +475,10 @@ select {
   margin: 6px 0 5px;
   padding: 0 7px;
   text-transform: uppercase;
+}
+
+.floor-table-head {
+  margin-top: 12px;
 }
 
 .stage-row,
@@ -786,6 +813,7 @@ select {
   border-radius: 999px;
   height: 14px;
   overflow: hidden;
+  position: relative;
 }
 
 .chart-fill {
@@ -793,6 +821,25 @@ select {
   display: block;
   height: 100%;
   min-width: 2px;
+}
+
+.chart-count {
+  color: #102a43;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+}
+
+.chart-count-done {
+  left: 7px;
+}
+
+.chart-count-total {
+  right: 7px;
 }
 
 .chart-row strong {
@@ -1016,8 +1063,9 @@ select {
   background: #454545;
   border: 1px solid #d9dde3;
   color: #fff;
-  font-size: 13px;
-  height: 34px;
+  font-size: 14px;
+  font-weight: 800;
+  height: 32px;
   padding: 5px 7px;
   text-align: center;
 }
@@ -1055,11 +1103,11 @@ select {
 
 .measurement-forecast-row th,
 .measurement-forecast-row td {
-  background: #454545;
+  background: #6b7280;
   border: 1px solid #d9dde3;
   color: #fff;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 400;
   padding: 5px 7px;
 }
 
@@ -1086,7 +1134,7 @@ select {
   background: #fff;
   border: 1px solid #c8d0d9;
   font-size: 13px;
-  min-height: 30px;
+  min-height: 28px;
   padding: 4px 6px;
   text-align: center;
 }
@@ -1098,24 +1146,43 @@ select {
 
 .date-editor {
   align-items: center;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 30px;
+  display: block;
+  position: relative;
   width: 100%;
 }
 
 .date-editor .date-text-input {
-  border-radius: 6px 0 0 6px;
+  border-radius: 6px;
   min-width: 0;
+  padding-right: 34px;
 }
 
 .date-editor .date-picker-input {
-  border-left: 0;
-  border-radius: 0 6px 6px 0;
-  min-width: 32px;
-  padding: 2px 1px;
+  background: transparent;
+  border: 0;
+  color: transparent;
+  height: 24px;
+  min-height: 24px;
+  min-width: 26px;
+  padding: 0;
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 26px;
+}
+
+.date-editor .date-picker-input::-webkit-datetime-edit {
+  display: none;
+}
+
+.date-editor .date-picker-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.8;
 }
 
 .mini-remove {
+  display: none;
   font-size: 17px;
   min-height: 28px;
   padding: 0;

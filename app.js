@@ -1372,7 +1372,7 @@ function renderMeasurementHead() {
 
   const headerRow = document.createElement("tr");
   headerRow.className = "measurement-column-row";
-  ["Nº", "ETAPA", "UNIDADE", "QTD. TOTAL"].forEach((label) => {
+  ["ID", "ETAPA", "UNIDADE", "QTD. TOTAL"].forEach((label) => {
     const th = document.createElement("th");
     th.textContent = label;
     headerRow.append(th);
@@ -1409,7 +1409,14 @@ function renderMeasurementHead() {
 
       const stack = document.createElement("div");
       stack.className = "measurement-date-stack";
-      stack.append(label, measuredAt);
+      const remove = document.createElement("button");
+      remove.className = "danger-button mini-remove screen-only";
+      remove.type = "button";
+      remove.textContent = "-";
+      remove.title = "Remover medição";
+      remove.setAttribute("aria-label", `Remover ${measurement.label}`);
+      remove.addEventListener("click", () => deleteMeasurement(measurement.id));
+      stack.append(label, measuredAt, remove);
       th.append(stack);
       headerRow.append(th);
     });
@@ -1723,7 +1730,12 @@ function renderTrendChart() {
   const bottom = 70;
   const innerWidth = width - left - right;
   const innerHeight = height - top - bottom;
-  const xFor = (index) => left + (points.length === 1 ? innerWidth / 2 : (innerWidth * index) / (points.length - 1));
+  const xFor = (index) => {
+    if (points.length === 1) return left + innerWidth / 2;
+    const paddingRatio = points.length === 2 ? 0.28 : 0.1;
+    const usableWidth = innerWidth * (1 - paddingRatio * 2);
+    return left + innerWidth * paddingRatio + (usableWidth * index) / (points.length - 1);
+  };
   const yFor = (time) => top + innerHeight - ((time - minY) / (maxY - minY)) * innerHeight;
   const path = points.map((point, index) => `${index === 0 ? "M" : "L"} ${xFor(index)} ${yFor(point.time)}`).join(" ");
   const targetY = yFor(targetTime);
@@ -1832,10 +1844,18 @@ function renderProgressChart() {
     fill.className = "chart-fill";
     fill.style.width = `${Math.round(progress.percent * 100)}%`;
 
-    const value = document.createElement("strong");
-    value.textContent = `${progress.done}/${progress.total} | ${formatPercent(progress.percent)}`;
+    const doneCount = document.createElement("span");
+    doneCount.className = "chart-count chart-count-done";
+    doneCount.textContent = progress.done;
 
-    track.append(fill);
+    const totalCount = document.createElement("span");
+    totalCount.className = "chart-count chart-count-total";
+    totalCount.textContent = progress.total;
+
+    const value = document.createElement("strong");
+    value.textContent = formatPercent(progress.percent);
+
+    track.append(fill, doneCount, totalCount);
     row.append(label, track, value);
     chart.append(row);
   });
@@ -2179,10 +2199,11 @@ function parseBrazilianDate(value) {
 
 function formatMonthTick(time) {
   const date = new Date(time);
-  return new Intl.DateTimeFormat("pt-BR", {
-    month: "long",
-    year: "2-digit"
-  }).format(date);
+  const month = new Intl.DateTimeFormat("pt-BR", { month: "short" })
+    .format(date)
+    .replace(".", "")
+    .toUpperCase();
+  return `${month} ${date.getFullYear()}`;
 }
 
 function daysBetween(targetDate, forecastDate) {
