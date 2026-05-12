@@ -167,8 +167,8 @@ function wireEvents() {
   elements.nextStage.addEventListener("click", () => moveStage(1));
   elements.uploadMeasurement.addEventListener("click", uploadMeasurement);
 
-  elements.exportButton.addEventListener("click", exportState);
-  elements.importFile.addEventListener("change", importState);
+  elements.exportButton?.addEventListener("click", exportState);
+  elements.importFile?.addEventListener("change", importState);
 
   document.addEventListener("keydown", handleGridNavigation);
   elements.trackingMatrix.addEventListener("touchstart", (event) => {
@@ -1313,9 +1313,7 @@ function renderMeasurementTable() {
   const header = document.createElement("header");
   const title = document.createElement("h2");
   title.textContent = "Unidades concluídas por medição";
-  const hint = document.createElement("p");
-  hint.textContent = "A linha superior registra a tendência para término de cada medição.";
-  header.append(title, hint);
+  header.append(title);
   card.append(header);
 
   const scroller = document.createElement("div");
@@ -1332,7 +1330,7 @@ function renderMeasurementTable() {
 
 function renderMeasurementColgroup() {
   const colgroup = document.createElement("colgroup");
-  ["34px", "230px", "82px", "92px", "28px", "112px", "28px"].forEach((width, index) => {
+  ["40px", "260px", "96px", "104px", "30px", "130px", "30px"].forEach((width, index) => {
     const col = document.createElement("col");
     col.style.width = width;
     if (index === 4 || index === 6) col.className = "measurement-gap-col";
@@ -1342,7 +1340,7 @@ function renderMeasurementColgroup() {
   const measurementCount = Math.max(1, state.measurements.length);
   Array.from({ length: measurementCount }).forEach(() => {
     const col = document.createElement("col");
-    col.style.width = "136px";
+    col.style.width = "154px";
     colgroup.append(col);
   });
 
@@ -1397,7 +1395,7 @@ function renderMeasurementHead() {
 
   const headerRow = document.createElement("tr");
   headerRow.className = "measurement-column-row";
-  ["", "ETAPA", "UNIDADE", "QTD. TOTAL"].forEach((label) => {
+  ["Nº", "ETAPA", "UNIDADE", "QTD. TOTAL"].forEach((label) => {
     const th = document.createElement("th");
     th.textContent = label;
     headerRow.append(th);

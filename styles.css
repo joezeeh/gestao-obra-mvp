@@ -52,7 +52,7 @@ button {
   display: flex;
   gap: 16px;
   justify-content: space-between;
-  padding: 16px clamp(16px, 4vw, 32px);
+  padding: 12px clamp(16px, 4vw, 32px);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -392,9 +392,9 @@ select {
 }
 
 .icon-button {
-  font-size: 22px;
+  font-size: 18px;
   line-height: 1;
-  min-width: 42px;
+  min-width: 36px;
   padding: 0;
 }
 
@@ -405,7 +405,7 @@ select {
 .stage-list,
 .floor-list {
   display: grid;
-  gap: 5px;
+  gap: 4px;
 }
 
 .stage-table-head,
@@ -414,26 +414,26 @@ select {
 .floor-row {
   align-items: center;
   display: grid;
-  gap: 10px;
+  gap: 7px;
 }
 
 .stage-table-head,
 .stage-row {
-  grid-template-columns: 28px 44px minmax(150px, 1fr) minmax(126px, 0.5fr) auto;
+  grid-template-columns: 24px 38px minmax(120px, 1fr) minmax(112px, 0.48fr) 40px;
 }
 
 .floor-table-head,
 .floor-row {
-  grid-template-columns: 28px minmax(140px, 1fr) 82px minmax(150px, 1.25fr) auto;
+  grid-template-columns: 24px minmax(128px, 1fr) 72px minmax(148px, 1.25fr) 40px;
 }
 
 .stage-table-head,
 .floor-table-head {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  margin-bottom: 8px;
-  padding: 0 10px;
+  margin: 6px 0 5px;
+  padding: 0 7px;
   text-transform: uppercase;
 }
 
@@ -441,15 +441,15 @@ select {
 .floor-row {
   background: var(--surface-2);
   border: 1px solid var(--line);
-  border-radius: 8px;
-  min-height: 44px;
-  padding: 5px 8px;
+  border-radius: 7px;
+  min-height: 38px;
+  padding: 4px 7px;
 }
 
 .stage-row input,
 .floor-row input {
-  min-height: 32px;
-  padding: 5px 8px;
+  min-height: 28px;
+  padding: 3px 7px;
 }
 
 .row-order {
@@ -490,10 +490,10 @@ select {
   cursor: grab;
   display: flex;
   font-weight: 700;
-  height: 28px;
+  height: 24px;
   justify-content: center;
   user-select: none;
-  width: 28px;
+  width: 24px;
 }
 
 .drag-handle:active {
@@ -970,9 +970,9 @@ select {
   background: #454545;
   border: 1px solid #d9dde3;
   color: #fff;
-  font-size: 11px;
-  height: 31px;
-  padding: 4px 6px;
+  font-size: 13px;
+  height: 34px;
+  padding: 5px 7px;
   text-align: center;
 }
 
@@ -980,7 +980,7 @@ select {
   background: #fff;
   border: 1px solid #e7eaef;
   color: var(--text);
-  font-size: 12px;
+  font-size: 13px;
   height: 28px;
   padding: 3px 6px;
   text-align: center;
@@ -1008,27 +1008,27 @@ select {
 }
 
 .measurement-forecast-row th {
-  background: #fff;
-  color: var(--text);
+  background: #454545;
+  color: #fff;
 }
 
 .measurement-forecast-row th:first-child {
-  color: var(--accent);
+  color: #fff;
   font-weight: 800;
   text-align: right;
 }
 
 .forecast-date-cell {
-  outline: 2px solid #22a447;
-  outline-offset: -3px;
+  outline: 0;
 }
 
 .forecast-date-cell input,
 .measurement-edit-head input {
   background: #fff;
   border: 1px solid #c8d0d9;
-  min-height: 26px;
-  padding: 3px 5px;
+  font-size: 13px;
+  min-height: 30px;
+  padding: 4px 6px;
   text-align: center;
 }
 
@@ -1039,7 +1039,7 @@ select {
 
 .mini-remove {
   font-size: 17px;
-  min-height: 26px;
+  min-height: 28px;
   padding: 0;
 }
 
@@ -1213,6 +1213,12 @@ select {
 
   .wide-panel {
     grid-column: span 1;
+  }
+}
+
+@media (max-width: 1280px) {
+  .lower-grid {
+    grid-template-columns: 1fr;
   }
 }
 
