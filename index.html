@@ -44,14 +44,14 @@
         </form>
       </section>
 
-      <nav class="tabs app-content" aria-label="Navegação principal">
-        <button class="tab active" data-view="setup" type="button">Configuração</button>
-        <button class="tab" data-view="tracking" type="button">Apontamento</button>
-        <button class="tab" data-view="review" type="button">Conferência</button>
-        <button class="tab" data-view="measurements" type="button">Medições</button>
-      </nav>
+      <div class="workspace app-content">
+        <nav class="tabs" aria-label="Navegação principal">
+          <button class="tab active" data-view="setup" type="button">Configuração</button>
+          <button class="tab" data-view="tracking" type="button">Apontamento</button>
+          <button class="tab" data-view="review" type="button">Dashboard</button>
+        </nav>
 
-      <main class="app-content">
+      <main>
         <section class="view active setup-view" id="setupView">
           <section class="config-hero">
             <div>
@@ -97,11 +97,14 @@
               </div>
             </section>
 
-            <section class="panel quick-panel">
+          </div>
+
+          <div class="config-grid lower-grid">
+            <section class="panel table-panel">
               <div class="panel-header">
                 <h2>Cadastro de Pavimentos</h2>
               </div>
-              <div class="floor-entry-grid">
+              <div class="floor-entry-grid floor-entry-inline">
                 <label class="field">
                   <span>Pavimento</span>
                   <input id="floorMatrixName" class="grid-input" data-grid="floorSeed" data-row="0" data-col="0" type="text" />
@@ -114,15 +117,7 @@
                   <span>Repetições</span>
                   <input id="floorMatrixRepeat" class="grid-input" data-grid="floorSeed" data-row="0" data-col="2" type="number" min="1" />
                 </label>
-              </div>
-              <button class="primary-button icon-button" id="addFloorMatrix" type="button" title="Adicionar à matriz" aria-label="Adicionar à matriz">+</button>
-            </section>
-          </div>
-
-          <div class="config-grid lower-grid">
-            <section class="panel table-panel">
-              <div class="panel-header">
-                <h2>Pavimentos e Unidades</h2>
+                <button class="primary-button icon-button" id="addFloorMatrix" type="button" title="Adicionar à matriz" aria-label="Adicionar à matriz">+</button>
               </div>
               <div class="floor-table-head" aria-hidden="true">
                 <span></span>
@@ -182,14 +177,12 @@
 
         <section class="view" id="reviewView">
           <section class="summary-strip" id="summaryStrip"></section>
-          <section class="review-grid" id="reviewGrid"></section>
-        </section>
-
-        <section class="view" id="measurementsView">
           <section class="measurement-report" id="measurementReport"></section>
           <section class="trend-report" id="trendReport"></section>
+          <section class="review-grid" id="reviewGrid"></section>
         </section>
       </main>
+      </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

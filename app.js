@@ -51,7 +51,6 @@ const elements = {
   setupView: document.querySelector("#setupView"),
   trackingView: document.querySelector("#trackingView"),
   reviewView: document.querySelector("#reviewView"),
-  measurementsView: document.querySelector("#measurementsView"),
   projectName: document.querySelector("#projectName"),
   builderName: document.querySelector("#builderName"),
   projectLocation: document.querySelector("#projectLocation"),
@@ -645,7 +644,6 @@ function render() {
   elements.setupView.classList.toggle("active", activeView === "setup");
   elements.trackingView.classList.toggle("active", activeView === "tracking");
   elements.reviewView.classList.toggle("active", activeView === "review");
-  elements.measurementsView.classList.toggle("active", activeView === "measurements");
 
   elements.projectName.value = state.projectName;
   elements.builderName.value = state.builderName;
@@ -664,7 +662,6 @@ function render() {
   renderStageSelect();
   renderTrackingMatrix();
   renderReview();
-  renderMeasurements();
 }
 
 function renderStages() {
@@ -929,9 +926,13 @@ function playStageSlide() {
 function renderReview() {
   elements.summaryStrip.innerHTML = "";
   elements.reviewGrid.innerHTML = "";
+  elements.measurementReport.innerHTML = "";
+  elements.trendReport.innerHTML = "";
 
   renderReportHeader();
   renderProgressChart();
+  renderMeasurementTable();
+  renderTrendChart();
 
   state.stages.forEach((stage) => {
     const progress = calculateProgress(stage.id);
@@ -1038,16 +1039,8 @@ async function uploadMeasurement() {
   });
 
   await loadRemoteWorkspace();
-  activeView = "measurements";
+  activeView = "review";
   render();
-}
-
-function renderMeasurements() {
-  elements.measurementReport.innerHTML = "";
-  elements.trendReport.innerHTML = "";
-
-  renderMeasurementTable();
-  renderTrendChart();
 }
 
 function renderMeasurementTable() {
@@ -1121,31 +1114,84 @@ function renderCurrentMeasurementBlock() {
 }
 
 function renderHistoryMeasurementBlock() {
+  const wrap = document.createElement("div");
+  wrap.className = "history-wrap";
+
+  const forecastRow = document.createElement("div");
+  forecastRow.className = "forecast-row";
+  state.measurements.forEach((measurement) => {
+    const cell = document.createElement("div");
+    cell.className = "forecast-cell";
+
+    const forecast = document.createElement("input");
+    forecast.type = "date";
+    forecast.value = measurement.forecastFinishDate || "";
+    forecast.setAttribute("aria-label", "Término atualizado");
+    forecast.addEventListener("change", () => updateMeasurement(measurement.id, { forecast_finish_date: forecast.value || null }));
+
+    const remove = document.createElement("button");
+    remove.className = "danger-button mini-remove";
+    remove.type = "button";
+    remove.textContent = "-";
+    remove.title = "Remover medição";
+    remove.addEventListener("click", () => deleteMeasurement(measurement.id));
+
+    cell.append(forecast, remove);
+    forecastRow.append(cell);
+  });
+
+  if (state.measurements.length === 0) {
+    const cell = document.createElement("div");
+    cell.className = "forecast-cell";
+    cell.textContent = "Término atualizado";
+    forecastRow.append(cell);
+  }
+
   const table = document.createElement("table");
   table.className = "measurement-block history-block";
-
   const thead = document.createElement("thead");
   const titleRow = document.createElement("tr");
   const title = document.createElement("th");
   title.colSpan = Math.max(1, state.measurements.length);
   title.textContent = "UNIDADES CONCLUÍDAS POR MEDIÇÃO";
   titleRow.append(title);
-
-  const inputRow = document.createElement("tr");
+  const dateRow = document.createElement("tr");
   state.measurements.forEach((measurement) => {
-    const th = document.createElement("th");
-    th.className = "measurement-edit-head";
-    th.append(renderMeasurementHeaderControls(measurement));
-    inputRow.append(th);
+    const dateTh = document.createElement("th");
+    dateTh.className = "measurement-edit-head";
+
+    const headerStack = document.createElement("div");
+    headerStack.className = "measurement-date-stack";
+
+    const label = document.createElement("input");
+    label.value = measurement.label;
+    label.setAttribute("aria-label", "Nome da medição");
+    label.addEventListener("change", () => updateMeasurement(measurement.id, { label: label.value.trim() || measurement.label }));
+
+    const measuredAt = document.createElement("input");
+    measuredAt.type = "date";
+    measuredAt.value = measurement.measuredAt || "";
+    measuredAt.setAttribute("aria-label", "Data da medição");
+    measuredAt.addEventListener("change", () => {
+      if (!measuredAt.value) {
+        measuredAt.value = measurement.measuredAt || "";
+        return;
+      }
+      updateMeasurement(measurement.id, { measured_at: measuredAt.value });
+    });
+
+    headerStack.append(label, measuredAt);
+    dateTh.append(headerStack);
+    dateRow.append(dateTh);
   });
 
   if (state.measurements.length === 0) {
     const th = document.createElement("th");
     th.textContent = "Sem medições";
-    inputRow.append(th);
+    dateRow.append(th);
   }
 
-  thead.append(titleRow, inputRow);
+  thead.append(titleRow, dateRow);
 
   const tbody = document.createElement("tbody");
   state.stages.forEach((stage) => {
@@ -1176,45 +1222,8 @@ function renderHistoryMeasurementBlock() {
   });
 
   table.append(thead, tbody);
-  return table;
-}
-
-function renderMeasurementHeaderControls(measurement) {
-  const wrapper = document.createElement("div");
-  wrapper.className = "measurement-header-controls";
-
-  const label = document.createElement("input");
-  label.value = measurement.label;
-  label.setAttribute("aria-label", "Nome da medição");
-  label.addEventListener("change", () => updateMeasurement(measurement.id, { label: label.value.trim() || measurement.label }));
-
-  const measuredAt = document.createElement("input");
-  measuredAt.type = "date";
-  measuredAt.value = measurement.measuredAt || "";
-  measuredAt.setAttribute("aria-label", "Data da medição");
-  measuredAt.addEventListener("change", () => {
-    if (!measuredAt.value) {
-      measuredAt.value = measurement.measuredAt || "";
-      return;
-    }
-    updateMeasurement(measurement.id, { measured_at: measuredAt.value });
-  });
-
-  const forecast = document.createElement("input");
-  forecast.type = "date";
-  forecast.value = measurement.forecastFinishDate || "";
-  forecast.setAttribute("aria-label", "Término atualizado");
-  forecast.addEventListener("change", () => updateMeasurement(measurement.id, { forecast_finish_date: forecast.value || null }));
-
-  const remove = document.createElement("button");
-  remove.className = "danger-button mini-remove";
-  remove.type = "button";
-  remove.textContent = "-";
-  remove.title = "Remover medição";
-  remove.addEventListener("click", () => deleteMeasurement(measurement.id));
-
-  wrapper.append(label, measuredAt, forecast, remove);
-  return wrapper;
+  wrap.append(forecastRow, table);
+  return wrap;
 }
 
 async function updateMeasurement(measurementId, changes) {
@@ -1648,7 +1657,6 @@ function loadState() {
       projectLocation: parsed.projectLocation || initialState.projectLocation,
       updatedAt: parsed.updatedAt || initialState.updatedAt,
       targetDeliveryDate: parsed.targetDeliveryDate || initialState.targetDeliveryDate,
-      forecastFinishDate: parsed.forecastFinishDate || initialState.forecastFinishDate,
       builderLogo: parsed.builderLogo || initialState.builderLogo,
       projectPhoto: parsed.projectPhoto || initialState.projectPhoto,
       floors: Array.isArray(parsed.floors) ? parsed.floors : initialState.floors,
@@ -1693,7 +1701,6 @@ function importState(event) {
         projectLocation: imported.projectLocation || "",
         updatedAt: imported.updatedAt || "",
         targetDeliveryDate: imported.targetDeliveryDate || "",
-        forecastFinishDate: imported.forecastFinishDate || "",
         builderLogo: imported.builderLogo || "",
         projectPhoto: imported.projectPhoto || "",
         floors: Array.isArray(imported.floors) ? imported.floors : [],

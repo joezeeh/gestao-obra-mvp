@@ -1,16 +1,16 @@
 :root {
-  --bg: #081424;
-  --surface: #101d2f;
-  --surface-2: #17263b;
-  --line: #2d3d55;
-  --text: #edf4ff;
-  --muted: #9fb0c7;
-  --primary: #3b82f6;
-  --primary-strong: #2563eb;
-  --accent: #35c27c;
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #eef2f5;
+  --line: #d7dde4;
+  --text: #17202a;
+  --muted: #667085;
+  --primary: #235789;
+  --primary-strong: #17446e;
+  --accent: #2f855a;
   --warning: #b7791f;
-  --danger: #ff6b6b;
-  --shadow: 0 14px 34px rgba(0, 0, 0, 0.24);
+  --danger: #b42318;
+  --shadow: 0 10px 30px rgba(23, 32, 42, 0.08);
 }
 
 * {
@@ -36,6 +36,13 @@ button {
 
 .app-shell {
   min-height: 100vh;
+}
+
+.workspace {
+  align-items: start;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  min-height: calc(100vh - 72px);
 }
 
 .topbar {
@@ -136,25 +143,29 @@ h2 {
 
 .tabs {
   background: var(--surface);
-  border-bottom: 1px solid var(--line);
-  display: flex;
-  gap: 4px;
-  overflow-x: auto;
-  padding: 0 clamp(16px, 4vw, 32px);
+  border-right: 1px solid var(--line);
+  display: grid;
+  gap: 6px;
+  min-height: calc(100vh - 72px);
+  padding: 16px 12px;
+  position: sticky;
+  top: 72px;
 }
 
 .tab {
   background: transparent;
-  border: 0;
-  border-bottom: 3px solid transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
   color: var(--muted);
-  min-height: 48px;
-  padding: 0 14px;
+  min-height: 42px;
+  padding: 0 12px;
+  text-align: left;
   white-space: nowrap;
 }
 
 .tab.active {
-  border-color: var(--primary);
+  background: #eaf2fb;
+  border-color: #c9dced;
   color: var(--primary);
   font-weight: 700;
 }
@@ -216,6 +227,10 @@ main {
   min-width: 0;
 }
 
+.project-panel {
+  grid-column: 1 / -1;
+}
+
 .wide-panel {
   grid-column: span 2;
 }
@@ -253,8 +268,8 @@ main {
 
 input,
 select {
-  background: #0b1728;
-  border: 1px solid #34465f;
+  background: #fff;
+  border: 1px solid #c8d0d9;
   border-radius: 6px;
   color: var(--text);
   min-height: 42px;
@@ -309,7 +324,7 @@ select {
 
 .asset-uploader img {
   align-items: center;
-  background: #0b1728;
+  background: #fff;
   border: 1px solid var(--line);
   border-radius: 6px;
   display: block;
@@ -351,8 +366,8 @@ select {
 }
 
 .danger-button {
-  background: rgba(255, 107, 107, 0.12);
-  border: 1px solid rgba(255, 107, 107, 0.35);
+  background: #fff7f6;
+  border: 1px solid #f0b8b2;
   color: var(--danger);
 }
 
@@ -575,7 +590,7 @@ select {
 
 .matrix-cell.header,
 .matrix-cell.floor-label {
-  background: #15243a;
+  background: #f0f4f8;
   font-weight: 700;
 }
 
@@ -595,8 +610,8 @@ select {
 
 .check-button {
   align-items: center;
-  background: #0b1728;
-  border: 2px solid #73849b;
+  background: #fff;
+  border: 2px solid #8f98a3;
   border-radius: 5px;
   color: #fff;
   display: flex;
@@ -705,7 +720,7 @@ select {
 }
 
 .chart-track {
-  background: #0b1728;
+  background: #e6ebf0;
   border: 1px solid var(--line);
   border-radius: 999px;
   height: 14px;
@@ -773,7 +788,7 @@ select {
 .measurement-board {
   align-items: start;
   display: grid;
-  gap: 24px;
+  gap: 26px;
   grid-template-columns: 430px 150px minmax(520px, 1fr);
   min-width: 1120px;
 }
@@ -784,8 +799,8 @@ select {
 }
 
 .measurement-block th {
-  background: #333b48;
-  border: 1px solid #566071;
+  background: #454545;
+  border: 1px solid #dadde2;
   color: #fff;
   font-size: 12px;
   padding: 7px 8px;
@@ -793,8 +808,8 @@ select {
 }
 
 .measurement-block td {
-  background: #0f1a2b;
-  border: 1px solid #26364c;
+  background: #fff;
+  border: 1px solid #e8eaee;
   color: var(--text);
   font-size: 12px;
   height: 28px;
@@ -832,21 +847,49 @@ select {
   min-width: 132px;
 }
 
-.measurement-edit-head {
-  vertical-align: top;
-}
-
-.measurement-header-controls {
+.history-wrap {
   display: grid;
-  gap: 5px;
+  gap: 6px;
 }
 
-.measurement-header-controls input {
-  background: #0b1728;
-  color: var(--text);
+.forecast-row {
+  display: grid;
+  gap: 0;
+  grid-auto-columns: minmax(132px, 1fr);
+  grid-auto-flow: column;
+  min-height: 32px;
+}
+
+.forecast-cell {
+  align-items: center;
+  border: 2px solid #1fc14f;
+  display: grid;
+  gap: 4px;
+  grid-template-columns: 1fr 28px;
+  padding: 2px;
+}
+
+.forecast-cell input {
+  border: 0;
+  min-height: 24px;
+  padding: 2px 4px;
+}
+
+.measurement-edit-head {
+  padding: 4px;
+  vertical-align: middle;
+}
+
+.measurement-edit-head input {
   font-size: 11px;
   min-height: 28px;
   padding: 4px 6px;
+  text-align: center;
+}
+
+.measurement-date-stack {
+  display: grid;
+  gap: 4px;
 }
 
 .mini-remove {
@@ -1030,6 +1073,19 @@ select {
   .layout-grid,
   .work-header {
     grid-template-columns: 1fr;
+  }
+
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .tabs {
+    border-bottom: 1px solid var(--line);
+    border-right: 0;
+    display: flex;
+    min-height: 0;
+    overflow-x: auto;
+    position: static;
   }
 
   .auth-actions {
