@@ -41,14 +41,15 @@ button {
 .workspace {
   align-items: start;
   display: grid;
-  grid-template-columns: 168px minmax(0, 1fr);
+  grid-template-columns: 142px minmax(0, 1fr);
   min-height: calc(100vh - 72px);
 }
 
 .topbar {
   align-items: center;
-  background: var(--surface);
-  border-bottom: 1px solid var(--line);
+  background: #102a43;
+  border-bottom: 1px solid #0b1f33;
+  color: #fff;
   display: flex;
   gap: 16px;
   justify-content: space-between;
@@ -59,7 +60,7 @@ button {
 }
 
 .eyebrow {
-  color: var(--primary);
+  color: #b9d7f2;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0;
@@ -94,7 +95,7 @@ h2 {
 }
 
 .user-pill {
-  color: var(--muted);
+  color: #d9e6f2;
   font-size: 13px;
   font-weight: 700;
 }
@@ -142,12 +143,12 @@ h2 {
 }
 
 .tabs {
-  background: var(--surface);
-  border-right: 1px solid var(--line);
+  background: #102a43;
+  border-right: 1px solid #0b1f33;
   display: grid;
-  gap: 4px;
+  gap: 3px;
   min-height: calc(100vh - 72px);
-  padding: 12px 8px;
+  padding: 10px 7px;
   position: sticky;
   top: 72px;
 }
@@ -155,19 +156,19 @@ h2 {
 .tab {
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 6px;
-  color: var(--muted);
-  font-size: 13px;
-  min-height: 36px;
-  padding: 0 10px;
+  border-radius: 5px;
+  color: #d9e6f2;
+  font-size: 12px;
+  min-height: 30px;
+  padding: 0 8px;
   text-align: left;
   white-space: nowrap;
 }
 
 .tab.active {
-  background: #eaf2fb;
-  border-color: #c9dced;
-  color: var(--primary);
+  background: #1f5d8f;
+  border-color: #377eb5;
+  color: #fff;
   font-weight: 700;
 }
 
@@ -218,7 +219,7 @@ main {
 
 .lower-grid {
   align-items: start;
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.82fr);
+  grid-template-columns: minmax(0, 1.12fr) minmax(340px, 0.88fr);
   margin-top: 16px;
 }
 
@@ -448,6 +449,7 @@ select {
 
 .stage-row input,
 .floor-row input {
+  font-size: 15px;
   min-height: 28px;
   padding: 3px 7px;
 }
@@ -688,7 +690,7 @@ select {
 }
 
 .report-photo img {
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .report-info {
@@ -1037,6 +1039,22 @@ select {
   gap: 3px;
 }
 
+.date-editor {
+  align-items: center;
+  display: grid;
+  gap: 4px;
+  grid-template-columns: minmax(96px, 1fr) 32px;
+}
+
+.date-editor .date-text-input {
+  min-width: 0;
+}
+
+.date-editor .date-picker-input {
+  min-width: 32px;
+  padding: 2px;
+}
+
 .mini-remove {
   font-size: 17px;
   min-height: 28px;
@@ -1061,6 +1079,16 @@ select {
 .target-line {
   stroke: #22a447;
   stroke-width: 2;
+}
+
+.trend-axis {
+  stroke: #9aa3ad;
+  stroke-width: 1.5;
+}
+
+.trend-grid-line {
+  stroke: #e2e8f0;
+  stroke-width: 1;
 }
 
 .target-label {
@@ -1088,9 +1116,16 @@ select {
 
 .trend-x {
   fill: var(--text);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   text-anchor: middle;
+}
+
+.trend-y {
+  fill: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  text-anchor: end;
 }
 
 .print-panel-header {
@@ -1213,12 +1248,6 @@ select {
 
   .wide-panel {
     grid-column: span 1;
-  }
-}
-
-@media (max-width: 1280px) {
-  .lower-grid {
-    grid-template-columns: 1fr;
   }
 }
 
@@ -1351,7 +1380,12 @@ select {
 }
 
 @media print {
-  @page {
+  @page dashboard-page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  @page panel-page {
     size: A3 landscape;
     margin: 10mm;
   }
@@ -1363,20 +1397,53 @@ select {
   .topbar,
   .tabs,
   #setupView,
-  #trackingView,
-  #reviewView {
+  #trackingView {
     display: none !important;
   }
 
   .workspace,
-  main,
-  #panelView {
+  main {
     display: block !important;
     min-height: 0;
     padding: 0;
   }
 
+  body[data-active-view="setup"] main,
+  body[data-active-view="tracking"] main {
+    display: none !important;
+  }
+
+  body[data-active-view="review"] #reviewView {
+    display: block !important;
+    page: dashboard-page;
+  }
+
+  body[data-active-view="review"] #panelView {
+    display: none !important;
+  }
+
+  body[data-active-view="panel"] #panelView {
+    display: block !important;
+    page: panel-page;
+  }
+
+  body[data-active-view="panel"] #reviewView {
+    display: none !important;
+  }
+
+  body[data-active-view="review"] .measurement-table-scroll {
+    overflow: visible;
+  }
+
+  body[data-active-view="review"] .measurement-grid-table {
+    min-width: 0;
+  }
+
   .print-panel-card,
+  .report-header,
+  .progress-chart,
+  .measurement-table-card,
+  .trend-card,
   .review-stage {
     box-shadow: none;
   }

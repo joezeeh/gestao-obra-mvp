@@ -661,6 +661,8 @@ function setActiveStage(stageId, direction = "") {
 }
 
 function render() {
+  document.body.dataset.activeView = activeView;
+
   elements.tabs.forEach((tab) => {
     tab.classList.toggle("active", tab.dataset.view === activeView);
   });
@@ -1366,12 +1368,11 @@ function renderMeasurementHead() {
     measurements.forEach((measurement) => {
       const th = document.createElement("th");
       th.className = "forecast-date-cell";
-      const input = document.createElement("input");
-      input.type = "date";
-      input.value = measurement.forecastFinishDate || "";
-      input.setAttribute("aria-label", `Tendência para término da ${measurement.label}`);
-      input.addEventListener("change", () => updateMeasurement(measurement.id, { forecast_finish_date: input.value || null }));
-      th.append(input);
+      th.append(createDateEditor(
+        measurement.forecastFinishDate,
+        `Tendência para término da ${measurement.label}`,
+        (value) => updateMeasurement(measurement.id, { forecast_finish_date: value || null })
+      ));
       forecastRow.append(th);
     });
   }
@@ -1420,17 +1421,15 @@ function renderMeasurementHead() {
       label.setAttribute("aria-label", "Nome da medição");
       label.addEventListener("change", () => updateMeasurement(measurement.id, { label: label.value.trim() || measurement.label }));
 
-      const measuredAt = document.createElement("input");
-      measuredAt.type = "date";
-      measuredAt.value = measurement.measuredAt || "";
-      measuredAt.setAttribute("aria-label", "Data da medição");
-      measuredAt.addEventListener("change", () => {
-        if (!measuredAt.value) {
-          measuredAt.value = measurement.measuredAt || "";
-          return;
-        }
-        updateMeasurement(measurement.id, { measured_at: measuredAt.value });
-      });
+      const measuredAt = createDateEditor(
+        measurement.measuredAt,
+        "Data da medição",
+        (value) => {
+          if (!value) return;
+          updateMeasurement(measurement.id, { measured_at: value });
+        },
+        false
+      );
 
       const remove = document.createElement("button");
       remove.className = "danger-button mini-remove";
@@ -1457,6 +1456,7 @@ function renderMeasurementBody() {
 
   state.stages.forEach((stage, index) => {
     const progress = calculateProgress(stage.id);
+    const latest = state.measurements[state.measurements.length - 1];
     const row = document.createElement("tr");
 
     [
@@ -1475,7 +1475,7 @@ function renderMeasurementBody() {
 
     const current = document.createElement("td");
     current.className = "current-progress-cell";
-    current.textContent = progress.done || "";
+    current.textContent = latest?.totals[stage.id]?.completed || "";
     row.append(current, createGapCell());
 
     if (state.measurements.length === 0) {
@@ -1515,6 +1515,69 @@ function createGapCell() {
   td.className = "measurement-gap";
   td.setAttribute("aria-hidden", "true");
   return td;
+}
+
+function createDateEditor(value, label, onCommit, allowBlank = true) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "date-editor";
+
+  const text = document.createElement("input");
+  text.className = "date-text-input";
+  text.type = "text";
+  text.inputMode = "numeric";
+  text.placeholder = "dd/mm/aaaa";
+  text.value = formatDateForInput(value);
+  text.setAttribute("aria-label", label);
+
+  const picker = document.createElement("input");
+  picker.className = "date-picker-input";
+  picker.type = "date";
+  picker.value = value || "";
+  picker.title = label;
+  picker.setAttribute("aria-label", `${label} pelo calendário`);
+
+  const commitTextValue = () => {
+    if (!text.value.trim()) {
+      if (allowBlank) {
+        picker.value = "";
+        onCommit("");
+        return;
+      }
+      text.value = formatDateForInput(picker.value);
+      return;
+    }
+
+    const parsed = parseBrazilianDate(text.value);
+    if (!parsed) {
+      text.value = formatDateForInput(picker.value);
+      return;
+    }
+    if (parsed === picker.value) return;
+    picker.value = parsed;
+    text.value = formatDateForInput(parsed);
+    onCommit(parsed);
+  };
+
+  text.addEventListener("input", () => {
+    text.value = maskBrazilianDate(text.value);
+  });
+  text.addEventListener("focus", () => text.select());
+  text.addEventListener("blur", commitTextValue);
+  text.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      commitTextValue();
+      text.blur();
+    }
+  });
+
+  picker.addEventListener("change", () => {
+    text.value = formatDateForInput(picker.value);
+    onCommit(picker.value || "");
+  });
+
+  wrapper.append(text, picker);
+  return wrapper;
 }
 
 async function updateMeasurement(measurementId, changes) {
@@ -1614,7 +1677,7 @@ function renderTrendChart() {
   const points = state.measurements
     .filter((measurement) => measurement.forecastFinishDate)
     .map((measurement) => ({
-      label: formatShortDate(measurement.measuredAt),
+      label: formatMeasurementHeader(measurement),
       date: measurement.forecastFinishDate,
       time: new Date(`${measurement.forecastFinishDate}T00:00:00`).getTime()
     }));
@@ -1630,17 +1693,26 @@ function renderTrendChart() {
 
   const targetTime = new Date(`${state.targetDeliveryDate}T00:00:00`).getTime();
   const values = [...points.map((point) => point.time), targetTime];
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const padding = Math.max(1, (max - min) * 0.15);
-  const minY = min - padding;
-  const maxY = max + padding;
+  const minDate = new Date(Math.min(...values));
+  const maxDate = new Date(Math.max(...values));
+  const minYDate = new Date(minDate.getFullYear(), minDate.getMonth() - 1, 1);
+  const maxYDate = new Date(maxDate.getFullYear(), maxDate.getMonth() + 2, 1);
+  const minY = minYDate.getTime();
+  const maxY = maxYDate.getTime();
+  const yTicks = [];
+  for (
+    let tick = new Date(minYDate);
+    tick.getTime() <= maxY;
+    tick = new Date(tick.getFullYear(), tick.getMonth() + 1, 1)
+  ) {
+    yTicks.push(tick.getTime());
+  }
   const width = 900;
-  const height = 300;
-  const left = 70;
+  const height = 330;
+  const left = 86;
   const right = 28;
   const top = 28;
-  const bottom = 54;
+  const bottom = 70;
   const innerWidth = width - left - right;
   const innerHeight = height - top - bottom;
   const xFor = (index) => left + (points.length === 1 ? innerWidth / 2 : (innerWidth * index) / (points.length - 1));
@@ -1653,6 +1725,12 @@ function renderTrendChart() {
   svg.classList.add("trend-svg");
 
   svg.innerHTML = `
+    ${yTicks.map((tick) => `
+      <line x1="${left}" y1="${yFor(tick)}" x2="${width - right}" y2="${yFor(tick)}" class="trend-grid-line" />
+      <text x="${left - 12}" y="${yFor(tick) + 4}" class="trend-y">${formatMonthTick(tick)}</text>
+    `).join("")}
+    <line x1="${left}" y1="${top}" x2="${left}" y2="${height - bottom}" class="trend-axis" />
+    <line x1="${left}" y1="${height - bottom}" x2="${width - right}" y2="${height - bottom}" class="trend-axis" />
     <line x1="${left}" y1="${targetY}" x2="${width - right}" y2="${targetY}" class="target-line" />
     <text x="${left + 12}" y="${targetY - 8}" class="target-label">META</text>
     <text x="${width - right - 92}" y="${targetY - 8}" class="target-label">${formatShortDate(state.targetDeliveryDate)}</text>
@@ -2055,6 +2133,44 @@ function formatShortDate(value) {
     day: "2-digit",
     month: "2-digit",
     year: "numeric"
+  }).format(date);
+}
+
+function formatDateForInput(value) {
+  if (!value) return "";
+  return formatShortDate(value);
+}
+
+function maskBrazilianDate(value) {
+  const digits = String(value).replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
+
+function parseBrazilianDate(value) {
+  const digits = String(value).replace(/\D/g, "");
+  if (digits.length !== 8) return "";
+  const day = Number(digits.slice(0, 2));
+  const month = Number(digits.slice(2, 4));
+  const year = Number(digits.slice(4));
+  const date = new Date(year, month - 1, day);
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return "";
+  }
+  return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function formatMonthTick(time) {
+  const date = new Date(time);
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit"
   }).format(date);
 }
 
