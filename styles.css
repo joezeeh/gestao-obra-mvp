@@ -47,8 +47,8 @@ button {
 
 .topbar {
   align-items: center;
-  background: #102a43;
-  border-bottom: 1px solid #0b1f33;
+  background: #071827;
+  border-bottom: 1px solid #05111d;
   color: #fff;
   display: flex;
   gap: 16px;
@@ -143,33 +143,49 @@ h2 {
 }
 
 .tabs {
-  background: #102a43;
-  border-right: 1px solid #0b1f33;
+  background: #071827;
+  border-right: 1px solid #05111d;
   display: grid;
-  gap: 3px;
+  gap: 8px;
+  align-content: start;
   min-height: calc(100vh - 72px);
-  padding: 10px 7px;
+  padding: 12px 8px;
   position: sticky;
   top: 72px;
 }
 
 .tab {
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 5px;
-  color: #d9e6f2;
-  font-size: 12px;
-  min-height: 30px;
-  padding: 0 8px;
+  align-items: center;
+  background: #0d2538;
+  border: 1px solid #1b405d;
+  border-radius: 7px;
+  color: #f2f7fb;
+  display: grid;
+  font-size: 13px;
+  font-weight: 800;
+  gap: 8px;
+  grid-template-columns: 24px 1fr;
+  min-height: 40px;
+  padding: 0 10px;
   text-align: left;
   white-space: nowrap;
 }
 
 .tab.active {
-  background: #1f5d8f;
-  border-color: #377eb5;
+  background: #1c5f90;
+  border-color: #4ea0d8;
   color: #fff;
   font-weight: 700;
+}
+
+.tab-icon {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 5px;
+  display: inline-flex;
+  height: 24px;
+  justify-content: center;
+  width: 24px;
 }
 
 main {
@@ -665,8 +681,8 @@ select {
   box-shadow: var(--shadow);
   display: grid;
   gap: 16px;
-  grid-template-columns: 140px minmax(0, 1fr) 220px;
-  min-height: 142px;
+  grid-template-columns: 150px minmax(0, 1fr);
+  min-height: 118px;
   padding: 14px;
 }
 
@@ -680,6 +696,33 @@ select {
   height: 112px;
   justify-content: center;
   overflow: hidden;
+}
+
+.dashboard-overview {
+  align-items: stretch;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(220px, 0.52fr) minmax(300px, 1fr);
+}
+
+.dashboard-photo-card {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  display: flex;
+  justify-content: center;
+  min-height: 280px;
+  overflow: hidden;
+  padding: 10px;
+}
+
+.dashboard-photo-card img {
+  height: 100%;
+  max-height: 420px;
+  object-fit: contain;
+  width: 100%;
 }
 
 .report-logo img,
@@ -725,7 +768,7 @@ select {
   align-items: center;
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(110px, 180px) minmax(120px, 1fr) 72px;
+  grid-template-columns: minmax(95px, 150px) minmax(120px, 1fr) 100px;
   min-height: 34px;
 }
 
@@ -747,6 +790,7 @@ select {
 
 .chart-fill {
   background: var(--accent);
+  display: block;
   height: 100%;
   min-width: 2px;
 }
@@ -1009,15 +1053,28 @@ select {
   font-weight: 400;
 }
 
-.measurement-forecast-row th {
+.measurement-forecast-row th,
+.measurement-forecast-row td {
   background: #454545;
+  border: 1px solid #d9dde3;
   color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 5px 7px;
 }
 
-.measurement-forecast-row th:first-child {
+.measurement-forecast-row th:first-child,
+.measurement-forecast-row td:first-child {
   color: #fff;
   font-weight: 800;
   text-align: right;
+}
+
+.measurement-spacer-row td {
+  background: #fff;
+  border: 0;
+  height: 14px;
+  padding: 0;
 }
 
 .forecast-date-cell {
@@ -1042,17 +1099,20 @@ select {
 .date-editor {
   align-items: center;
   display: grid;
-  gap: 4px;
-  grid-template-columns: minmax(96px, 1fr) 32px;
+  grid-template-columns: minmax(0, 1fr) 30px;
+  width: 100%;
 }
 
 .date-editor .date-text-input {
+  border-radius: 6px 0 0 6px;
   min-width: 0;
 }
 
 .date-editor .date-picker-input {
+  border-left: 0;
+  border-radius: 0 6px 6px 0;
   min-width: 32px;
-  padding: 2px;
+  padding: 2px 1px;
 }
 
 .mini-remove {
@@ -1275,7 +1335,7 @@ select {
   }
 
   .tabs {
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid #05111d;
     border-right: 0;
     display: flex;
     min-height: 0;
@@ -1286,7 +1346,7 @@ select {
 
   .tab {
     flex: 0 0 auto;
-    min-height: 34px;
+    min-height: 38px;
   }
 
   .auth-actions {
@@ -1373,6 +1433,10 @@ select {
     grid-template-columns: 1fr;
   }
 
+  .dashboard-overview {
+    grid-template-columns: 1fr;
+  }
+
   .report-logo,
   .report-photo {
     height: 96px;
@@ -1441,6 +1505,7 @@ select {
 
   .print-panel-card,
   .report-header,
+  .dashboard-photo-card,
   .progress-chart,
   .measurement-table-card,
   .trend-card,
@@ -1451,6 +1516,18 @@ select {
   .review-grid {
     gap: 8px;
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  body[data-active-view="review"] .dashboard-overview {
+    grid-template-columns: 0.48fr 0.52fr;
+  }
+
+  body[data-active-view="review"] .dashboard-photo-card {
+    min-height: 360px;
+  }
+
+  body[data-active-view="review"] .mini-remove {
+    display: none !important;
   }
 
   .review-stage header {

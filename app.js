@@ -1353,30 +1353,6 @@ function renderMeasurementHead() {
   const thead = document.createElement("thead");
   const measurements = state.measurements;
 
-  const forecastRow = document.createElement("tr");
-  forecastRow.className = "measurement-forecast-row";
-  const forecastLabel = document.createElement("th");
-  forecastLabel.colSpan = 7;
-  forecastLabel.textContent = "Tendência para término";
-  forecastRow.append(forecastLabel);
-
-  if (measurements.length === 0) {
-    const empty = document.createElement("th");
-    empty.textContent = "Sem medições";
-    forecastRow.append(empty);
-  } else {
-    measurements.forEach((measurement) => {
-      const th = document.createElement("th");
-      th.className = "forecast-date-cell";
-      th.append(createDateEditor(
-        measurement.forecastFinishDate,
-        `Tendência para término da ${measurement.label}`,
-        (value) => updateMeasurement(measurement.id, { forecast_finish_date: value || null })
-      ));
-      forecastRow.append(th);
-    });
-  }
-
   const groupRow = document.createElement("tr");
   groupRow.className = "measurement-group-row";
   const services = document.createElement("th");
@@ -1431,23 +1407,15 @@ function renderMeasurementHead() {
         false
       );
 
-      const remove = document.createElement("button");
-      remove.className = "danger-button mini-remove";
-      remove.type = "button";
-      remove.textContent = "-";
-      remove.title = "Remover medição";
-      remove.setAttribute("aria-label", `Remover ${measurement.label}`);
-      remove.addEventListener("click", () => deleteMeasurement(measurement.id));
-
       const stack = document.createElement("div");
       stack.className = "measurement-date-stack";
-      stack.append(label, measuredAt, remove);
+      stack.append(label, measuredAt);
       th.append(stack);
       headerRow.append(th);
     });
   }
 
-  thead.append(forecastRow, groupRow, headerRow);
+  thead.append(groupRow, headerRow);
   return thead;
 }
 
@@ -1500,7 +1468,47 @@ function renderMeasurementBody() {
     tbody.append(row);
   });
 
+  tbody.append(renderMeasurementSpacerRow(), renderForecastFooterRow());
   return tbody;
+}
+
+function renderMeasurementSpacerRow() {
+  const row = document.createElement("tr");
+  row.className = "measurement-spacer-row";
+  const cell = document.createElement("td");
+  cell.colSpan = 7 + Math.max(1, state.measurements.length);
+  row.append(cell);
+  return row;
+}
+
+function renderForecastFooterRow() {
+  const row = document.createElement("tr");
+  row.className = "measurement-forecast-row";
+
+  const label = document.createElement("td");
+  label.colSpan = 7;
+  label.textContent = "Tendência para término";
+  row.append(label);
+
+  if (state.measurements.length === 0) {
+    const empty = document.createElement("td");
+    empty.textContent = "Sem medições";
+    row.append(empty);
+    return row;
+  }
+
+  state.measurements.forEach((measurement) => {
+    const cell = document.createElement("td");
+    cell.className = "forecast-date-cell";
+    cell.append(createDateEditor(
+      measurement.forecastFinishDate,
+      `Tendência para término da ${measurement.label}`,
+      (value) => updateMeasurement(measurement.id, { forecast_finish_date: value || null })
+    ));
+    row.append(cell);
+  });
+
+  return row;
 }
 
 function createGapHeader() {
@@ -1774,8 +1782,16 @@ function renderReportHeader() {
 
   info.append(title, meta, updated);
 
-  const photoBox = document.createElement("div");
-  photoBox.className = "report-photo";
+  report.append(logoBox, info);
+  elements.summaryStrip.append(report);
+}
+
+function renderProgressChart() {
+  const overview = document.createElement("section");
+  overview.className = "dashboard-overview";
+
+  const photoBox = document.createElement("article");
+  photoBox.className = "dashboard-photo-card";
   if (state.projectPhoto) {
     const photo = document.createElement("img");
     photo.src = state.projectPhoto;
@@ -1783,11 +1799,6 @@ function renderReportHeader() {
     photoBox.append(photo);
   }
 
-  report.append(logoBox, info, photoBox);
-  elements.summaryStrip.append(report);
-}
-
-function renderProgressChart() {
   const chart = document.createElement("article");
   chart.className = "progress-chart";
 
@@ -1822,14 +1833,15 @@ function renderProgressChart() {
     fill.style.width = `${Math.round(progress.percent * 100)}%`;
 
     const value = document.createElement("strong");
-    value.textContent = formatPercent(progress.percent);
+    value.textContent = `${progress.done}/${progress.total} | ${formatPercent(progress.percent)}`;
 
     track.append(fill);
     row.append(label, track, value);
     chart.append(row);
   });
 
-  elements.summaryStrip.append(chart);
+  overview.append(photoBox, chart);
+  elements.summaryStrip.append(overview);
 }
 
 function addMatrixCell(text, className) {
@@ -2168,8 +2180,7 @@ function parseBrazilianDate(value) {
 function formatMonthTick(time) {
   const date = new Date(time);
   return new Intl.DateTimeFormat("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
+    month: "long",
     year: "2-digit"
   }).format(date);
 }
