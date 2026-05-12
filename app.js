@@ -51,6 +51,7 @@ const elements = {
   setupView: document.querySelector("#setupView"),
   trackingView: document.querySelector("#trackingView"),
   reviewView: document.querySelector("#reviewView"),
+  panelView: document.querySelector("#panelView"),
   projectName: document.querySelector("#projectName"),
   builderName: document.querySelector("#builderName"),
   projectLocation: document.querySelector("#projectLocation"),
@@ -76,6 +77,7 @@ const elements = {
   trackingCount: document.querySelector("#trackingCount"),
   trackingMatrix: document.querySelector("#trackingMatrix"),
   summaryStrip: document.querySelector("#summaryStrip"),
+  printPanelHeader: document.querySelector("#printPanelHeader"),
   reviewGrid: document.querySelector("#reviewGrid"),
   measurementReport: document.querySelector("#measurementReport"),
   trendReport: document.querySelector("#trendReport"),
@@ -294,11 +296,14 @@ async function loadRemoteWorkspace() {
     targetDeliveryDate: project.target_delivery_date || "",
     builderLogo: project.logo_url || "",
     projectPhoto: project.photo_url || "",
-    floors: (floors || []).map((floor) => ({
-      id: floor.id,
-      name: floor.name,
-      units: generateUnitList(floor.unit_count)
-    })),
+    floors: (floors || []).map((floor) => {
+      const savedUnits = Array.isArray(floor.unit_labels) ? floor.unit_labels.map(String).filter(Boolean) : [];
+      return {
+        id: floor.id,
+        name: floor.name,
+        units: savedUnits.length > 0 ? savedUnits : generateUnitList(floor.unit_count)
+      };
+    }),
     stages: (stages || []).map((stage) => normalizeStage({
       id: stage.id,
       name: stage.name,
@@ -509,9 +514,21 @@ async function saveFloorRemote(floorId) {
       .from("floors")
       .update({
         name: floor.name,
-        unit_count: floor.units.length
+        unit_count: floor.units.length,
+        unit_labels: floor.units
       })
       .eq("id", floorId);
+    if (error && String(error.message || "").includes("unit_labels")) {
+      const { error: fallbackError } = await supabaseClient
+        .from("floors")
+        .update({
+          name: floor.name,
+          unit_count: floor.units.length
+        })
+        .eq("id", floorId);
+      if (fallbackError) console.error(fallbackError);
+      return;
+    }
     if (error) console.error(error);
   });
 }
@@ -573,11 +590,18 @@ async function addFloorRowsFromMatrix() {
       project_id: currentProjectId,
       name: floor.name,
       unit_count: floor.units.length,
+      unit_labels: floor.units,
       sort_order: startOrder + index
     }));
 
     await withRealtimeSuppressed(async () => {
       const { error } = await supabaseClient.from("floors").insert(rows);
+      if (error && String(error.message || "").includes("unit_labels")) {
+        const fallbackRows = rows.map(({ unit_labels, ...row }) => row);
+        const { error: fallbackError } = await supabaseClient.from("floors").insert(fallbackRows);
+        if (fallbackError) console.error(fallbackError);
+        return;
+      }
       if (error) console.error(error);
     });
     await loadRemoteWorkspace();
@@ -644,6 +668,7 @@ function render() {
   elements.setupView.classList.toggle("active", activeView === "setup");
   elements.trackingView.classList.toggle("active", activeView === "tracking");
   elements.reviewView.classList.toggle("active", activeView === "review");
+  elements.panelView.classList.toggle("active", activeView === "panel");
 
   elements.projectName.value = state.projectName;
   elements.builderName.value = state.builderName;
@@ -662,6 +687,7 @@ function render() {
   renderStageSelect();
   renderTrackingMatrix();
   renderReview();
+  renderPanel();
 }
 
 function renderStages() {
@@ -805,14 +831,31 @@ function renderFloors() {
       const count = Math.max(1, Number(unitInput.value) || 1);
       floor.units = generateUnitList(count);
       pruneChecksForFloor(floor.id, floor.units);
-      preview.textContent = floor.units.join(", ");
+      unitsInput.value = floor.units.join(", ");
       queueSaveFloor(floor.id);
       saveAndRender(false);
     });
 
-    const preview = document.createElement("div");
-    preview.className = "floor-meta";
-    preview.textContent = floor.units.join(", ");
+    const unitsInput = document.createElement("input");
+    unitsInput.type = "text";
+    unitsInput.value = floor.units.join(", ");
+    unitsInput.className = "grid-input";
+    unitsInput.dataset.grid = "floors";
+    unitsInput.dataset.row = String(index);
+    unitsInput.dataset.col = "2";
+    unitsInput.setAttribute("aria-label", "Numeração das unidades");
+    unitsInput.addEventListener("change", () => {
+      const units = parseUnitLabels(unitsInput.value);
+      if (units.length === 0) {
+        unitsInput.value = floor.units.join(", ");
+        return;
+      }
+      floor.units = units;
+      unitInput.value = String(floor.units.length);
+      pruneChecksForFloor(floor.id, floor.units);
+      queueSaveFloor(floor.id);
+      saveAndRender(false);
+    });
 
     const remove = document.createElement("button");
     remove.className = "danger-button icon-button";
@@ -827,7 +870,7 @@ function renderFloors() {
       saveAndRender();
     });
 
-    row.append(handle, nameInput, unitInput, preview, remove);
+    row.append(handle, nameInput, unitInput, unitsInput, remove);
     elements.floorList.append(row);
   });
 }
@@ -925,7 +968,6 @@ function playStageSlide() {
 
 function renderReview() {
   elements.summaryStrip.innerHTML = "";
-  elements.reviewGrid.innerHTML = "";
   elements.measurementReport.innerHTML = "";
   elements.trendReport.innerHTML = "";
 
@@ -933,6 +975,13 @@ function renderReview() {
   renderProgressChart();
   renderMeasurementTable();
   renderTrendChart();
+}
+
+function renderPanel() {
+  elements.printPanelHeader.innerHTML = "";
+  elements.reviewGrid.innerHTML = "";
+
+  renderPrintPanelHeader();
 
   state.stages.forEach((stage) => {
     const progress = calculateProgress(stage.id);
@@ -975,6 +1024,37 @@ function renderReview() {
     stageCard.append(header, miniMatrix);
     elements.reviewGrid.append(stageCard);
   });
+}
+
+function renderPrintPanelHeader() {
+  const header = document.createElement("article");
+  header.className = "print-panel-card";
+
+  const logoBox = document.createElement("div");
+  logoBox.className = "print-logo";
+  if (state.builderLogo) {
+    const logo = document.createElement("img");
+    logo.src = state.builderLogo;
+    logo.alt = "";
+    logoBox.append(logo);
+  }
+
+  const info = document.createElement("div");
+  info.className = "print-info";
+
+  const title = document.createElement("h2");
+  title.textContent = state.projectName || "Obra sem nome";
+
+  const meta = document.createElement("p");
+  const parts = [state.builderName, state.projectLocation].filter(Boolean);
+  meta.textContent = parts.length > 0 ? parts.join(" | ") : "Dados da obra não informados";
+
+  const updated = document.createElement("span");
+  updated.textContent = state.updatedAt ? `Atualizado em ${formatDateTime(state.updatedAt)}` : "Atualização não informada";
+
+  info.append(title, meta, updated);
+  header.append(logoBox, info);
+  elements.printPanelHeader.append(header);
 }
 
 async function uploadMeasurement() {
@@ -1043,7 +1123,7 @@ async function uploadMeasurement() {
   render();
 }
 
-function renderMeasurementTable() {
+function renderMeasurementTableLegacy() {
   const card = document.createElement("article");
   card.className = "measurement-table-card";
 
@@ -1224,6 +1304,219 @@ function renderHistoryMeasurementBlock() {
   table.append(thead, tbody);
   wrap.append(forecastRow, table);
   return wrap;
+}
+
+function renderMeasurementTable() {
+  const card = document.createElement("article");
+  card.className = "measurement-table-card";
+
+  const header = document.createElement("header");
+  const title = document.createElement("h2");
+  title.textContent = "Unidades concluídas por medição";
+  const hint = document.createElement("p");
+  hint.textContent = "A linha superior registra a tendência para término de cada medição.";
+  header.append(title, hint);
+  card.append(header);
+
+  const scroller = document.createElement("div");
+  scroller.className = "measurement-table-scroll";
+
+  const table = document.createElement("table");
+  table.className = "measurement-table measurement-grid-table";
+  table.append(renderMeasurementColgroup(), renderMeasurementHead(), renderMeasurementBody());
+
+  scroller.append(table);
+  card.append(scroller);
+  elements.measurementReport.append(card);
+}
+
+function renderMeasurementColgroup() {
+  const colgroup = document.createElement("colgroup");
+  ["34px", "230px", "82px", "92px", "28px", "112px", "28px"].forEach((width, index) => {
+    const col = document.createElement("col");
+    col.style.width = width;
+    if (index === 4 || index === 6) col.className = "measurement-gap-col";
+    colgroup.append(col);
+  });
+
+  const measurementCount = Math.max(1, state.measurements.length);
+  Array.from({ length: measurementCount }).forEach(() => {
+    const col = document.createElement("col");
+    col.style.width = "136px";
+    colgroup.append(col);
+  });
+
+  return colgroup;
+}
+
+function renderMeasurementHead() {
+  const thead = document.createElement("thead");
+  const measurements = state.measurements;
+
+  const forecastRow = document.createElement("tr");
+  forecastRow.className = "measurement-forecast-row";
+  const forecastLabel = document.createElement("th");
+  forecastLabel.colSpan = 7;
+  forecastLabel.textContent = "Tendência para término";
+  forecastRow.append(forecastLabel);
+
+  if (measurements.length === 0) {
+    const empty = document.createElement("th");
+    empty.textContent = "Sem medições";
+    forecastRow.append(empty);
+  } else {
+    measurements.forEach((measurement) => {
+      const th = document.createElement("th");
+      th.className = "forecast-date-cell";
+      const input = document.createElement("input");
+      input.type = "date";
+      input.value = measurement.forecastFinishDate || "";
+      input.setAttribute("aria-label", `Tendência para término da ${measurement.label}`);
+      input.addEventListener("change", () => updateMeasurement(measurement.id, { forecast_finish_date: input.value || null }));
+      th.append(input);
+      forecastRow.append(th);
+    });
+  }
+
+  const groupRow = document.createElement("tr");
+  groupRow.className = "measurement-group-row";
+  const services = document.createElement("th");
+  services.colSpan = 4;
+  services.textContent = "SERVIÇOS";
+  groupRow.append(services, createGapHeader());
+
+  const latest = measurements[measurements.length - 1];
+  const current = document.createElement("th");
+  current.textContent = latest?.label || "ATUAL";
+  groupRow.append(current, createGapHeader());
+
+  const history = document.createElement("th");
+  history.colSpan = Math.max(1, measurements.length);
+  history.textContent = "UNIDADES CONCLUÍDAS POR MEDIÇÃO";
+  groupRow.append(history);
+
+  const headerRow = document.createElement("tr");
+  headerRow.className = "measurement-column-row";
+  ["", "ETAPA", "UNIDADE", "QTD. TOTAL"].forEach((label) => {
+    const th = document.createElement("th");
+    th.textContent = label;
+    headerRow.append(th);
+  });
+  headerRow.append(createGapHeader());
+
+  const currentDate = document.createElement("th");
+  currentDate.textContent = latest ? formatShortDate(latest.measuredAt) : "Sem medição";
+  headerRow.append(currentDate, createGapHeader());
+
+  if (measurements.length === 0) {
+    const th = document.createElement("th");
+    th.textContent = "Sem medições";
+    headerRow.append(th);
+  } else {
+    measurements.forEach((measurement) => {
+      const th = document.createElement("th");
+      th.className = "measurement-edit-head";
+
+      const label = document.createElement("input");
+      label.value = measurement.label;
+      label.setAttribute("aria-label", "Nome da medição");
+      label.addEventListener("change", () => updateMeasurement(measurement.id, { label: label.value.trim() || measurement.label }));
+
+      const measuredAt = document.createElement("input");
+      measuredAt.type = "date";
+      measuredAt.value = measurement.measuredAt || "";
+      measuredAt.setAttribute("aria-label", "Data da medição");
+      measuredAt.addEventListener("change", () => {
+        if (!measuredAt.value) {
+          measuredAt.value = measurement.measuredAt || "";
+          return;
+        }
+        updateMeasurement(measurement.id, { measured_at: measuredAt.value });
+      });
+
+      const remove = document.createElement("button");
+      remove.className = "danger-button mini-remove";
+      remove.type = "button";
+      remove.textContent = "-";
+      remove.title = "Remover medição";
+      remove.setAttribute("aria-label", `Remover ${measurement.label}`);
+      remove.addEventListener("click", () => deleteMeasurement(measurement.id));
+
+      const stack = document.createElement("div");
+      stack.className = "measurement-date-stack";
+      stack.append(label, measuredAt, remove);
+      th.append(stack);
+      headerRow.append(th);
+    });
+  }
+
+  thead.append(forecastRow, groupRow, headerRow);
+  return thead;
+}
+
+function renderMeasurementBody() {
+  const tbody = document.createElement("tbody");
+
+  state.stages.forEach((stage, index) => {
+    const progress = calculateProgress(stage.id);
+    const row = document.createElement("tr");
+
+    [
+      index + 1,
+      stage.name,
+      isFloorControlled(stage.id) ? "PAV." : "APTO",
+      progress.total
+    ].forEach((value, cellIndex) => {
+      const td = document.createElement("td");
+      td.textContent = value;
+      if (cellIndex === 1) td.className = "stage-name-cell";
+      row.append(td);
+    });
+
+    row.append(createGapCell());
+
+    const current = document.createElement("td");
+    current.className = "current-progress-cell";
+    current.textContent = progress.done || "";
+    row.append(current, createGapCell());
+
+    if (state.measurements.length === 0) {
+      row.append(document.createElement("td"));
+    } else {
+      state.measurements.forEach((measurement, measurementIndex) => {
+        const previous = measurementIndex === 0 ? 0 : (state.measurements[measurementIndex - 1].totals[stage.id]?.completed || 0);
+        const completed = measurement.totals[stage.id]?.completed || 0;
+        const delta = Math.max(0, completed - previous);
+        const td = document.createElement("td");
+        const input = document.createElement("input");
+        input.className = "measurement-delta-input";
+        input.type = "number";
+        input.min = "0";
+        input.value = delta > 0 ? String(delta) : "";
+        input.addEventListener("change", () => updateMeasurementDelta(measurement.id, stage.id, Number(input.value) || 0));
+        td.append(input);
+        row.append(td);
+      });
+    }
+
+    tbody.append(row);
+  });
+
+  return tbody;
+}
+
+function createGapHeader() {
+  const th = document.createElement("th");
+  th.className = "measurement-gap";
+  th.setAttribute("aria-hidden", "true");
+  return th;
+}
+
+function createGapCell() {
+  const td = document.createElement("td");
+  td.className = "measurement-gap";
+  td.setAttribute("aria-hidden", "true");
+  return td;
 }
 
 async function updateMeasurement(measurementId, changes) {
@@ -1543,6 +1836,13 @@ function collectUnits() {
 
 function generateUnitList(count) {
   return Array.from({ length: count }, (_, index) => String(index + 1).padStart(2, "0"));
+}
+
+function parseUnitLabels(value) {
+  return [...new Set(String(value)
+    .split(/[,\n;]/)
+    .map((item) => item.trim())
+    .filter(Boolean))];
 }
 
 function incrementFloorName(name, offset) {

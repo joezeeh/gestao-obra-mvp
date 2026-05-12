@@ -21,9 +21,13 @@ create table if not exists public.floors (
   project_id uuid not null references public.projects(id) on delete cascade,
   name text not null,
   unit_count integer not null default 1 check (unit_count > 0),
+  unit_labels jsonb,
   sort_order integer not null default 0,
   created_at timestamptz not null default now()
 );
+
+alter table public.floors
+add column if not exists unit_labels jsonb;
 
 create table if not exists public.stages (
   id uuid primary key default gen_random_uuid(),

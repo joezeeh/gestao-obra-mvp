@@ -49,6 +49,7 @@
           <button class="tab active" data-view="setup" type="button">Configuração</button>
           <button class="tab" data-view="tracking" type="button">Apontamento</button>
           <button class="tab" data-view="review" type="button">Dashboard</button>
+          <button class="tab" data-view="panel" type="button">Painel de Obra</button>
         </nav>
 
       <main>
@@ -122,8 +123,8 @@
               <div class="floor-table-head" aria-hidden="true">
                 <span></span>
                 <span>Pavimento</span>
-                <span>Unidades</span>
-                <span>Prévia</span>
+                <span>Qtd.</span>
+                <span>Numeração</span>
                 <span></span>
               </div>
               <div class="floor-list" id="floorList"></div>
@@ -179,6 +180,10 @@
           <section class="summary-strip" id="summaryStrip"></section>
           <section class="measurement-report" id="measurementReport"></section>
           <section class="trend-report" id="trendReport"></section>
+        </section>
+
+        <section class="view" id="panelView">
+          <section class="print-panel-header" id="printPanelHeader"></section>
           <section class="review-grid" id="reviewGrid"></section>
         </section>
       </main>

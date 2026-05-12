@@ -41,7 +41,7 @@ button {
 .workspace {
   align-items: start;
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
+  grid-template-columns: 168px minmax(0, 1fr);
   min-height: calc(100vh - 72px);
 }
 
@@ -145,9 +145,9 @@ h2 {
   background: var(--surface);
   border-right: 1px solid var(--line);
   display: grid;
-  gap: 6px;
+  gap: 4px;
   min-height: calc(100vh - 72px);
-  padding: 16px 12px;
+  padding: 12px 8px;
   position: sticky;
   top: 72px;
 }
@@ -157,8 +157,9 @@ h2 {
   border: 1px solid transparent;
   border-radius: 6px;
   color: var(--muted);
-  min-height: 42px;
-  padding: 0 12px;
+  font-size: 13px;
+  min-height: 36px;
+  padding: 0 10px;
   text-align: left;
   white-space: nowrap;
 }
@@ -171,7 +172,7 @@ h2 {
 }
 
 main {
-  padding: 20px clamp(12px, 4vw, 32px) 36px;
+  padding: 16px clamp(10px, 3vw, 28px) 32px;
 }
 
 .view {
@@ -290,6 +291,20 @@ select {
   grid-template-columns: 1.3fr 0.85fr 0.85fr;
 }
 
+.floor-entry-inline {
+  align-items: end;
+  grid-template-columns: minmax(130px, 1fr) 96px 96px 38px;
+}
+
+.floor-entry-inline .field {
+  margin-bottom: 0;
+}
+
+.floor-entry-inline .icon-button {
+  min-height: 38px;
+  min-width: 38px;
+}
+
 .project-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -390,7 +405,7 @@ select {
 .stage-list,
 .floor-list {
   display: grid;
-  gap: 8px;
+  gap: 5px;
 }
 
 .stage-table-head,
@@ -404,12 +419,12 @@ select {
 
 .stage-table-head,
 .stage-row {
-  grid-template-columns: 32px 56px minmax(170px, 1fr) minmax(138px, 0.55fr) auto;
+  grid-template-columns: 28px 44px minmax(150px, 1fr) minmax(126px, 0.5fr) auto;
 }
 
 .floor-table-head,
 .floor-row {
-  grid-template-columns: 32px minmax(160px, 1.2fr) 110px minmax(120px, 1fr) auto;
+  grid-template-columns: 28px minmax(140px, 1fr) 82px minmax(150px, 1.25fr) auto;
 }
 
 .stage-table-head,
@@ -427,13 +442,14 @@ select {
   background: var(--surface-2);
   border: 1px solid var(--line);
   border-radius: 8px;
-  min-height: 56px;
-  padding: 8px 10px;
+  min-height: 44px;
+  padding: 5px 8px;
 }
 
 .stage-row input,
 .floor-row input {
-  min-height: 38px;
+  min-height: 32px;
+  padding: 5px 8px;
 }
 
 .row-order {
@@ -474,10 +490,10 @@ select {
   cursor: grab;
   display: flex;
   font-weight: 700;
-  height: 32px;
+  height: 28px;
   justify-content: center;
   user-select: none;
-  width: 32px;
+  width: 28px;
 }
 
 .drag-handle:active {
@@ -938,6 +954,104 @@ select {
   font-weight: 700;
 }
 
+.measurement-table-card header p {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 4px 0 0;
+}
+
+.measurement-grid-table {
+  border-collapse: collapse;
+  min-width: 960px;
+  table-layout: fixed;
+}
+
+.measurement-grid-table th {
+  background: #454545;
+  border: 1px solid #d9dde3;
+  color: #fff;
+  font-size: 11px;
+  height: 31px;
+  padding: 4px 6px;
+  text-align: center;
+}
+
+.measurement-grid-table td {
+  background: #fff;
+  border: 1px solid #e7eaef;
+  color: var(--text);
+  font-size: 12px;
+  height: 28px;
+  padding: 3px 6px;
+  text-align: center;
+}
+
+.measurement-grid-table .measurement-gap {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+.measurement-grid-table .stage-name-cell {
+  text-align: left;
+}
+
+.measurement-grid-table .current-progress-cell {
+  background: #f8fafc;
+  font-weight: 700;
+}
+
+.measurement-grid-table td:nth-child(4) {
+  background: #fff;
+  color: var(--text);
+  font-weight: 400;
+}
+
+.measurement-forecast-row th {
+  background: #fff;
+  color: var(--text);
+}
+
+.measurement-forecast-row th:first-child {
+  color: var(--accent);
+  font-weight: 800;
+  text-align: right;
+}
+
+.forecast-date-cell {
+  outline: 2px solid #22a447;
+  outline-offset: -3px;
+}
+
+.forecast-date-cell input,
+.measurement-edit-head input {
+  background: #fff;
+  border: 1px solid #c8d0d9;
+  min-height: 26px;
+  padding: 3px 5px;
+  text-align: center;
+}
+
+.measurement-date-stack {
+  display: grid;
+  gap: 3px;
+}
+
+.mini-remove {
+  font-size: 17px;
+  min-height: 26px;
+  padding: 0;
+}
+
+.measurement-delta-input {
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  min-height: 22px;
+  padding: 0;
+  text-align: center;
+}
+
 .trend-svg {
   display: block;
   height: auto;
@@ -977,6 +1091,52 @@ select {
   font-size: 12px;
   font-weight: 700;
   text-anchor: middle;
+}
+
+.print-panel-header {
+  margin-bottom: 16px;
+}
+
+.print-panel-card {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 150px 1fr;
+  min-height: 96px;
+  padding: 14px;
+}
+
+.print-logo {
+  align-items: center;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  display: flex;
+  height: 68px;
+  justify-content: center;
+}
+
+.print-logo img {
+  max-height: 54px;
+  max-width: 130px;
+  object-fit: contain;
+}
+
+.print-info h2 {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.print-info p,
+.print-info span {
+  color: var(--muted);
+  display: block;
+  font-size: 13px;
+  margin: 0;
 }
 
 .review-stage {
@@ -1085,7 +1245,13 @@ select {
     display: flex;
     min-height: 0;
     overflow-x: auto;
+    padding: 8px;
     position: static;
+  }
+
+  .tab {
+    flex: 0 0 auto;
+    min-height: 34px;
   }
 
   .auth-actions {
@@ -1107,6 +1273,10 @@ select {
     grid-template-columns: 1fr;
   }
 
+  .floor-entry-inline {
+    grid-template-columns: 1fr 86px 86px 38px;
+  }
+
   .floor-table-head {
     display: none;
   }
@@ -1116,14 +1286,14 @@ select {
   }
 
   .floor-row {
-    grid-template-columns: 32px 1fr 88px;
+    grid-template-columns: 28px 1fr 76px;
   }
 
   .stage-row {
-    grid-template-columns: 32px 56px 1fr;
+    grid-template-columns: 28px 42px 1fr;
   }
 
-  .floor-row .floor-meta {
+  .floor-row input:nth-of-type(3) {
     grid-column: 2 / -1;
   }
 
@@ -1171,5 +1341,57 @@ select {
   .report-logo,
   .report-photo {
     height: 96px;
+  }
+}
+
+@media print {
+  @page {
+    size: A3 landscape;
+    margin: 10mm;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .topbar,
+  .tabs,
+  #setupView,
+  #trackingView,
+  #reviewView {
+    display: none !important;
+  }
+
+  .workspace,
+  main,
+  #panelView {
+    display: block !important;
+    min-height: 0;
+    padding: 0;
+  }
+
+  .print-panel-card,
+  .review-stage {
+    box-shadow: none;
+  }
+
+  .review-grid {
+    gap: 8px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .review-stage header {
+    min-height: 38px;
+    padding: 6px 8px;
+  }
+
+  .mini-matrix {
+    gap: 3px;
+    padding: 8px;
+  }
+
+  .mini-dot {
+    height: 12px;
+    width: 12px;
   }
 }
