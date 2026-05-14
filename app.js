@@ -1342,7 +1342,6 @@ function renderMeasurementSplitLayout() {
 function renderServicesSplitTable() {
   const table = document.createElement("table");
   table.className = "measurement-split-table services-split-table";
-  table.append(createServicesColgroup());
 
   const thead = document.createElement("thead");
   thead.innerHTML = `
@@ -1373,26 +1372,6 @@ function renderServicesSplitTable() {
 
   table.append(thead, tbody);
   return table;
-}
-
-function createServicesColgroup() {
-  const colgroup = document.createElement("colgroup");
-  const maxStageLength = Math.max("ETAPA".length, ...state.stages.map((stage) => stage.name.length));
-  const maxTotalLength = Math.max("QTD. TOTAL".length, ...state.stages.map((stage) => String(calculateProgress(stage.id).total).length));
-  const widths = [
-    `${Math.max(3, String(state.stages.length).length + 2)}ch`,
-    `${Math.min(30, Math.max(10, maxStageLength + 3))}ch`,
-    `${"UNIDADE".length + 2}ch`,
-    `${maxTotalLength + 2}ch`
-  ];
-
-  widths.forEach((width) => {
-    const col = document.createElement("col");
-    col.style.width = width;
-    colgroup.append(col);
-  });
-
-  return colgroup;
 }
 
 function renderCurrentSplitTable() {
@@ -1976,16 +1955,36 @@ function renderTrendChart() {
     <text x="${width - right - 92}" y="${targetY - 8}" class="target-label">${formatShortDate(state.targetDeliveryDate)}</text>
     <path d="${path}" class="trend-line" />
     ${points.map((point, index) => `
-      <circle cx="${xFor(index)}" cy="${yFor(point.time)}" r="5" class="trend-point">
-        <title>${escapeHtml(point.label)}\nTérmino: ${formatShortDate(point.date)}</title>
-      </circle>
+      <circle cx="${xFor(index)}" cy="${yFor(point.time)}" r="6" class="trend-point" data-tooltip="${escapeHtml(`${point.label}|Término: ${formatShortDate(point.date)}`)}" />
       <text x="${xFor(index)}" y="${yFor(point.time) - 10}" class="trend-value">${daysBetween(state.targetDeliveryDate, point.date)}</text>
       <text x="${xFor(index)}" y="${height - 18}" class="trend-x">${point.label}</text>
     `).join("")}
   `;
 
-  card.append(svg);
+  const tooltip = document.createElement("div");
+  tooltip.className = "trend-tooltip";
+  card.append(svg, tooltip);
+  wireTrendTooltip(card, tooltip);
   elements.trendReport.append(card);
+}
+
+function wireTrendTooltip(card, tooltip) {
+  card.querySelectorAll(".trend-point").forEach((point) => {
+    point.addEventListener("mouseenter", (event) => {
+      const [title, subtitle] = event.currentTarget.dataset.tooltip.split("|");
+      tooltip.innerHTML = `<strong>${escapeHtml(title)}</strong><span>${escapeHtml(subtitle || "")}</span>`;
+      tooltip.classList.add("active");
+      positionTrendTooltip(card, tooltip, event);
+    });
+    point.addEventListener("mousemove", (event) => positionTrendTooltip(card, tooltip, event));
+    point.addEventListener("mouseleave", () => tooltip.classList.remove("active"));
+  });
+}
+
+function positionTrendTooltip(card, tooltip, event) {
+  const rect = card.getBoundingClientRect();
+  tooltip.style.left = `${event.clientX - rect.left + 12}px`;
+  tooltip.style.top = `${event.clientY - rect.top - 12}px`;
 }
 
 function renderReportHeader() {
