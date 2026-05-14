@@ -2090,7 +2090,7 @@ function renderTrendChart() {
   const left = 86;
   const right = 28;
   const top = 28;
-  const bottom = 70;
+  const bottom = 54;
   const innerWidth = width - left - right;
   const innerHeight = height - top - bottom;
   const xFor = (index) => {
@@ -2130,7 +2130,7 @@ function renderTrendChart() {
     ${points.map((point, index) => `
       <circle cx="${xFor(index)}" cy="${yFor(point.time)}" r="6" class="trend-point" data-tooltip="${escapeHtml(`${point.label}|Término: ${formatShortDate(point.date)}|${formatDeviationDays(daysBetween(state.targetDeliveryDate, point.date))}`)}" />
       <text x="${xFor(index)}" y="${valueLabelFor(point).y}" class="${valueLabelFor(point).className}">${daysBetween(state.targetDeliveryDate, point.date)}</text>
-      <text x="${xFor(index)}" y="${height - 18}" class="trend-x">${point.label}</text>
+      <text x="${xFor(index)}" y="${height - 34}" class="trend-x">${point.label}</text>
     `).join("")}
   `;
 
@@ -2196,7 +2196,7 @@ function renderReportHeader() {
   const reportTitle = document.createElement("strong");
   reportTitle.textContent = "Relatório de desempenho físico de obra";
   const reportMeasurement = document.createElement("span");
-  reportMeasurement.textContent = latest?.label || "Sem medição";
+  reportMeasurement.textContent = latest ? formatMeasurementBadge(latest.label) : "Sem medição";
   reportBadge.append(reportTitle, reportMeasurement);
 
   report.append(logoBox, info, reportBadge);
@@ -2562,6 +2562,12 @@ function formatDateTime(value) {
 
 function formatMeasurementHeader(measurement) {
   return `${measurement.label} - ${formatShortDate(measurement.measuredAt)}`;
+}
+
+function formatMeasurementBadge(label) {
+  const match = String(label || "").match(/(\d+)/);
+  if (!match) return `Medição ${label || ""}`.trim();
+  return `Medição ${match[1].padStart(2, "0")}`;
 }
 
 function formatShortDate(value) {
