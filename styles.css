@@ -920,7 +920,6 @@ select {
 }
 
 .measurement-excel-table {
-  border: 1px solid #9fb6d8;
   border-collapse: collapse;
   color: var(--text);
   min-width: 100%;
@@ -929,7 +928,7 @@ select {
 }
 
 .measurement-excel-table .stage-col {
-  min-width: 150px;
+  min-width: 132px;
 }
 
 .measurement-excel-table .gap-col {
@@ -937,12 +936,12 @@ select {
 }
 
 .measurement-excel-table .history-col {
-  width: 118px;
+  width: 132px;
 }
 
 .measurement-excel-table th,
 .measurement-excel-table td {
-  border: 1px solid #d9dde3;
+  border: 1px solid #d9e2ee;
   height: 25px;
   padding: 3px 7px;
   text-align: center;
@@ -957,7 +956,7 @@ select {
 }
 
 .measurement-excel-table thead th {
-  border-color: #9fb6d8;
+  border-color: #fff;
 }
 
 .measurement-excel-table td {
@@ -967,11 +966,17 @@ select {
 
 .measurement-excel-table .group {
   background: #454545;
-  border-color: #9fb6d8;
+  border-color: #454545;
   color: #fff;
   font-size: 15px;
   height: 24px;
   text-transform: uppercase;
+}
+
+.measurement-excel-table .group + .group,
+.measurement-excel-table .group + .gap,
+.measurement-excel-table .gap + .group {
+  border-left-color: #fff;
 }
 
 .measurement-excel-table .services-title {
@@ -981,21 +986,31 @@ select {
 .measurement-excel-table .current-title,
 .measurement-excel-table .current-label {
   background: #213a59;
+  border-color: #213a59;
   color: #fff;
+}
+
+.measurement-excel-table .current-title,
+.measurement-excel-table .current-label {
+  border-bottom-color: #fff;
 }
 
 .measurement-excel-table .current-date {
   background: #9fb6d8;
+  border-color: #9fb6d8;
+  border-top-color: #fff;
   color: #000;
 }
 
 .measurement-excel-table .subhead,
 .measurement-excel-table .history-label {
   background: #bfbfbf;
+  border-color: #fff;
 }
 
 .measurement-excel-table .history-date {
-  background: #fff;
+  background: #bfbfbf;
+  border-color: #fff;
 }
 
 .measurement-excel-table .gap,
@@ -1025,15 +1040,20 @@ select {
   padding: 3px 6px;
 }
 
-.measurement-excel-table .measurement-edit-head input,
-.measurement-excel-table .forecast-date-cell input {
+.measurement-excel-table .measurement-edit-head > input,
+.measurement-excel-table .measurement-edit-head .date-text-input,
+.measurement-excel-table .forecast-date-cell .date-text-input {
   background: #fff;
   border: 1px solid #c8d0d9;
   border-radius: 4px;
-  min-height: 20px;
-  padding: 2px 5px;
+  min-height: 22px;
+  padding: 2px 24px 2px 5px;
   text-align: center;
   width: 100%;
+}
+
+.measurement-excel-table .measurement-edit-head > input {
+  padding-right: 5px;
 }
 
 .measurement-excel-table .measurement-delta-input {
@@ -1048,14 +1068,19 @@ select {
 
 .measurement-excel-table .date-editor .date-text-input {
   font-size: 13px;
-  height: 21px;
-  line-height: 21px;
-  padding-right: 22px;
+  height: 22px;
+  line-height: 22px;
 }
 
 .measurement-excel-table .date-editor .date-picker-input {
-  right: 0;
-  width: 20px;
+  background: transparent;
+  border: 0;
+  color: transparent;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+  right: 3px;
+  width: 18px;
 }
 
 .measurement-excel-table .trend-label {
@@ -1069,7 +1094,7 @@ select {
 }
 
 .measurement-excel-table .measurement-trend-row td {
-  border-top: 1px solid #d9dde3;
+  border: 1px solid #d9e2ee;
   height: 26px;
 }
 
@@ -1080,7 +1105,7 @@ select {
 .measurement-excel-table .measurement-separator-row td {
   background: #fff;
   border-color: #fff;
-  border-top: 1px solid #d9dde3;
+  border-top: 1px solid #d9e2ee;
   height: 8px;
   padding: 0;
 }
@@ -2526,8 +2551,9 @@ select {
     height: 23px !important;
   }
 
-  body[data-active-view="review"] .measurement-excel-table .measurement-edit-head input,
-  body[data-active-view="review"] .measurement-excel-table .forecast-date-cell input {
+  body[data-active-view="review"] .measurement-excel-table .measurement-edit-head > input,
+  body[data-active-view="review"] .measurement-excel-table .measurement-edit-head .date-text-input,
+  body[data-active-view="review"] .measurement-excel-table .forecast-date-cell .date-text-input {
     background: #fff !important;
     border: 1px solid #c8d0d9 !important;
     border-radius: 4px !important;
