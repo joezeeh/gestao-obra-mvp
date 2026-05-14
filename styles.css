@@ -951,20 +951,20 @@ select {
   border-spacing: 0;
   color: var(--text);
   min-width: 100%;
-  table-layout: auto;
-  width: max-content;
+  table-layout: fixed;
+  width: 100%;
 }
 
 .measurement-excel-table .stage-col {
-  min-width: 132px;
+  width: 24%;
 }
 
 .measurement-excel-table .gap-col {
-  width: 12px;
+  width: 1%;
 }
 
 .measurement-excel-table .history-col {
-  width: 132px;
+  width: 11%;
 }
 
 .measurement-excel-table th,
@@ -1020,6 +1020,11 @@ select {
 
 .measurement-excel-table .services-fill {
   color: transparent;
+}
+
+.measurement-excel-table .stage-subhead {
+  padding-left: 48px;
+  text-align: left;
 }
 
 .measurement-excel-table .current-title,
@@ -1133,6 +1138,13 @@ select {
   width: 100%;
 }
 
+.measurement-excel-table .history-date .date-text-input {
+  font-size: 15px;
+  padding-left: 3px;
+  padding-right: 22px;
+  text-align: left;
+}
+
 .measurement-excel-table .forecast-date-cell .date-text-input {
   font-weight: 400;
 }
@@ -1167,6 +1179,18 @@ select {
   filter: brightness(0) invert(1);
   opacity: 0.85;
   right: 0;
+  width: 18px;
+}
+
+.measurement-excel-table .history-date .date-picker-input {
+  opacity: 1;
+}
+
+.measurement-excel-table .history-date .date-picker-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: brightness(0) invert(1);
+  height: 16px;
+  opacity: 1;
   width: 16px;
 }
 
@@ -1216,7 +1240,7 @@ select {
 
 .measurement-excel-table .measurement-separator-row td {
   background: #fff;
-  border: 0;
+  border: 0 !important;
   height: 12px;
   padding: 0;
 }
@@ -1224,7 +1248,7 @@ select {
 .measurement-excel-table .measurement-separator-row td:nth-child(6),
 .measurement-excel-table .measurement-separator-row td:nth-child(8),
 .measurement-excel-table .measurement-separator-row td:last-child {
-  border-color: #fff;
+  border: 0 !important;
 }
 
 .measurement-excel-table .measurement-separator-row .gap {

@@ -1337,17 +1337,17 @@ function renderMeasurementSplitLayout() {
 
   const colgroup = document.createElement("colgroup");
   [
-    { className: "id-col", width: "38px" },
-    { className: "stage-col" },
-    { className: "unit-col", width: "78px" },
-    { className: "total-col", width: "92px" },
-    { className: "gap-col", width: "12px" },
-    { className: "current-col", width: "142px" },
-    { className: "gap-col", width: "12px" },
-    { className: "history-col", width: "132px" },
-    { className: "history-col", width: "132px" },
-    { className: "history-col", width: "132px" },
-    { className: "history-col", width: "132px" }
+    { className: "id-col", width: "3%" },
+    { className: "stage-col", width: "24%" },
+    { className: "unit-col", width: "7%" },
+    { className: "total-col", width: "8%" },
+    { className: "gap-col", width: "1%" },
+    { className: "current-col", width: "12%" },
+    { className: "gap-col", width: "1%" },
+    { className: "history-col", width: "11%" },
+    { className: "history-col", width: "11%" },
+    { className: "history-col", width: "11%" },
+    { className: "history-col", width: "11%" }
   ].forEach(({ width, className }) => {
     const col = document.createElement("col");
     if (width) col.style.width = width;
@@ -1358,10 +1358,7 @@ function renderMeasurementSplitLayout() {
   const thead = document.createElement("thead");
   const groupRow = document.createElement("tr");
   groupRow.append(
-    createMeasurementHeader("SERVIÇOS", "group services-title"),
-    createMeasurementHeader("ETAPA", "group stage-title"),
-    createMeasurementHeader("", "group services-fill"),
-    createMeasurementHeader("", "group services-fill"),
+    createMeasurementHeader("SERVIÇOS", "group services-title", { colSpan: 4 }),
     createMeasurementHeader("", "gap", { rowSpan: 3 }),
     createMeasurementHeader("MEDIÇÃO ATUAL", "group current-title"),
     createMeasurementHeader("", "gap", { rowSpan: 3 }),
@@ -1370,7 +1367,7 @@ function renderMeasurementSplitLayout() {
 
   const labelRow = document.createElement("tr");
   labelRow.append(
-    createMeasurementHeader("", "subhead", { colSpan: 2, rowSpan: 2 }),
+    createMeasurementHeader("ETAPA", "subhead stage-subhead", { colSpan: 2, rowSpan: 2 }),
     createMeasurementHeader("UNID.", "subhead", { rowSpan: 2 }),
     createMeasurementHeader("QTD. TOTAL", "subhead", { rowSpan: 2 }),
     createMeasurementHeader(latest?.label || "ATUAL", "current-label")
@@ -1391,7 +1388,7 @@ function renderMeasurementSplitLayout() {
   });
 
   const dateRow = document.createElement("tr");
-  dateRow.append(createMeasurementHeader(latest ? formatShortDate(latest.measuredAt) : "Sem medição", "current-date"));
+  dateRow.append(createMeasurementHeader(latest ? formatCompactDate(latest.measuredAt) : "Sem medição", "current-date"));
 
   visibleMeasurements.forEach((measurement) => {
     const th = createMeasurementHeader("", "measurement-edit-head history-date");
@@ -1402,7 +1399,8 @@ function renderMeasurementSplitLayout() {
         if (!value) return;
         updateMeasurement(measurement.id, { measured_at: value });
       },
-      false
+      false,
+      { compact: true }
     ));
     dateRow.append(th);
   });
@@ -1898,16 +1896,17 @@ function createGapCell() {
   return td;
 }
 
-function createDateEditor(value, label, onCommit, allowBlank = true) {
+function createDateEditor(value, label, onCommit, allowBlank = true, options = {}) {
   const wrapper = document.createElement("div");
   wrapper.className = "date-editor";
+  if (options.compact) wrapper.classList.add("compact-date-editor");
 
   const text = document.createElement("input");
   text.className = "date-text-input";
   text.type = "text";
   text.inputMode = "numeric";
-  text.placeholder = "dd/mm/aaaa";
-  text.value = formatDateForInput(value);
+  text.placeholder = options.compact ? "dd/mm/aa" : "dd/mm/aaaa";
+  text.value = options.compact ? formatCompactDate(value) : formatDateForInput(value);
   text.setAttribute("aria-label", label);
 
   const picker = document.createElement("input");
@@ -1924,23 +1923,23 @@ function createDateEditor(value, label, onCommit, allowBlank = true) {
         onCommit("");
         return;
       }
-      text.value = formatDateForInput(picker.value);
+      text.value = options.compact ? formatCompactDate(picker.value) : formatDateForInput(picker.value);
       return;
     }
 
     const parsed = parseBrazilianDate(text.value);
     if (!parsed) {
-      text.value = formatDateForInput(picker.value);
+      text.value = options.compact ? formatCompactDate(picker.value) : formatDateForInput(picker.value);
       return;
     }
     if (parsed === picker.value) return;
     picker.value = parsed;
-    text.value = formatDateForInput(parsed);
+    text.value = options.compact ? formatCompactDate(parsed) : formatDateForInput(parsed);
     onCommit(parsed);
   };
 
   text.addEventListener("input", () => {
-    text.value = maskBrazilianDate(text.value);
+    text.value = maskBrazilianDate(text.value, options.compact);
   });
   text.addEventListener("focus", () => text.select());
   text.addEventListener("blur", commitTextValue);
@@ -1953,7 +1952,7 @@ function createDateEditor(value, label, onCommit, allowBlank = true) {
   });
 
   picker.addEventListener("change", () => {
-    text.value = formatDateForInput(picker.value);
+    text.value = options.compact ? formatCompactDate(picker.value) : formatDateForInput(picker.value);
     onCommit(picker.value || "");
   });
 
@@ -2584,13 +2583,23 @@ function formatShortDate(value) {
   }).format(date);
 }
 
+function formatCompactDate(value) {
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return value || "";
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = String(date.getFullYear()).slice(-2);
+  return `${day}/${month}/${year}`;
+}
+
 function formatDateForInput(value) {
   if (!value) return "";
   return formatShortDate(value);
 }
 
-function maskBrazilianDate(value) {
-  const digits = String(value).replace(/\D/g, "").slice(0, 8);
+function maskBrazilianDate(value, compact = false) {
+  const maxLength = compact ? 6 : 8;
+  const digits = String(value).replace(/\D/g, "").slice(0, maxLength);
   if (digits.length <= 2) return digits;
   if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
   return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
@@ -2598,10 +2607,10 @@ function maskBrazilianDate(value) {
 
 function parseBrazilianDate(value) {
   const digits = String(value).replace(/\D/g, "");
-  if (digits.length !== 8) return "";
+  if (![6, 8].includes(digits.length)) return "";
   const day = Number(digits.slice(0, 2));
   const month = Number(digits.slice(2, 4));
-  const year = Number(digits.slice(4));
+  const year = digits.length === 6 ? 2000 + Number(digits.slice(4)) : Number(digits.slice(4));
   const date = new Date(year, month - 1, day);
   if (
     date.getFullYear() !== year ||
