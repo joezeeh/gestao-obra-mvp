@@ -1346,7 +1346,7 @@ function renderServicesSplitTable() {
   const thead = document.createElement("thead");
   thead.innerHTML = `
     <tr><th colspan="4">SERVIÇOS</th></tr>
-    <tr><th>ID</th><th>ETAPA</th><th>UNIDADE</th><th>QTD. TOTAL</th></tr>
+    <tr><th>ID</th><th>ETAPA</th><th>UNID.</th><th>QTD. TOTAL</th></tr>
   `;
 
   const tbody = document.createElement("tbody");

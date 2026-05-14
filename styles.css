@@ -907,7 +907,7 @@ select {
   align-items: start;
   display: grid;
   gap: 8px;
-  grid-template-columns: 385px 96px minmax(580px, 1fr);
+  grid-template-columns: 360px 96px minmax(640px, 1fr);
   max-width: 100%;
   overflow-x: auto;
 }
@@ -946,7 +946,7 @@ select {
   background: #fff;
   border: 1px solid #e7eaef;
   color: var(--text);
-  font-size: 13px;
+  font-size: 14px;
   height: 28px;
   padding: 3px 6px;
   text-align: center;
@@ -959,26 +959,30 @@ select {
 
 .services-split-table td:nth-child(1),
 .services-split-table th:nth-child(1) {
-  width: 30px;
+  width: 24px;
 }
 
 .services-split-table td:nth-child(2),
 .services-split-table th:nth-child(2) {
-  width: 190px;
+  width: 194px;
 }
 
 .services-split-table td:nth-child(3),
 .services-split-table th:nth-child(3) {
-  width: 74px;
+  width: 64px;
 }
 
 .services-split-table td:nth-child(4),
 .services-split-table th:nth-child(4) {
-  width: 90px;
+  width: 78px;
 }
 
 .current-split-table {
   width: 96px;
+}
+
+.current-split-table thead th {
+  background: #021b34;
 }
 
 .current-split-table .current-progress-cell {
@@ -992,8 +996,8 @@ select {
 
 .history-split-table th,
 .history-split-table td {
-  min-width: 112px;
-  width: 112px;
+  min-width: 122px;
+  width: 122px;
 }
 
 .history-split-table th {
@@ -1018,6 +1022,17 @@ select {
   color: #fff;
   font-weight: 400;
   height: 36px;
+}
+
+.services-split-table tbody td:nth-child(1),
+.services-split-table tbody td:nth-child(4),
+.current-split-table tbody td,
+.history-split-table tbody td {
+  font-size: 16px;
+}
+
+.services-split-table tbody td:nth-child(3) {
+  font-size: 15px;
 }
 
 .history-split-table .measurement-forecast-row td {
@@ -1280,7 +1295,7 @@ select {
 
 .measurement-date-stack {
   display: grid;
-  gap: 3px;
+  gap: 2px;
 }
 
 .date-editor {
@@ -1292,6 +1307,8 @@ select {
 
 .date-editor .date-text-input {
   border-radius: 6px;
+  height: 28px;
+  line-height: 28px;
   min-width: 0;
   padding-right: 34px;
 }
@@ -1300,8 +1317,8 @@ select {
   background: transparent;
   border: 0;
   color: transparent;
-  height: 24px;
-  min-height: 24px;
+  height: 22px;
+  min-height: 22px;
   min-width: 26px;
   padding: 0;
   position: absolute;
@@ -1719,7 +1736,7 @@ select {
   .measurement-report,
   .trend-report,
   .print-panel-header {
-    margin-bottom: 6px;
+    margin-bottom: 8px;
   }
 
   body[data-active-view="setup"] main,
@@ -1745,39 +1762,25 @@ select {
     display: none !important;
   }
 
-  body[data-active-view="review"] .measurement-table-scroll {
-    overflow: visible;
-  }
-
-  body[data-active-view="review"] .measurement-grid-table,
-  body[data-active-view="review"] .measurement-split-layout {
-    min-width: 0;
-  }
-
-  body[data-active-view="review"] .measurement-split-layout {
-    gap: 5px;
-    grid-template-columns: 278px 76px 360px;
-    overflow: visible;
-  }
-
+  body[data-active-view="review"] .measurement-table-scroll,
   body[data-active-view="review"] .measurement-history-scroll {
-    overflow: visible;
+    overflow: visible !important;
   }
 
-  body[data-active-view="review"] .history-split-table th,
-  body[data-active-view="review"] .history-split-table td {
-    min-width: 72px;
-    width: 72px;
+  body[data-active-view="review"] .measurement-split-layout {
+    gap: 8px;
+    grid-template-columns: 320px 88px minmax(0, 1fr);
+    overflow: visible;
   }
 
   body[data-active-view="review"] .services-split-table td:nth-child(1),
   body[data-active-view="review"] .services-split-table th:nth-child(1) {
-    width: 24px;
+    width: 22px;
   }
 
   body[data-active-view="review"] .services-split-table td:nth-child(2),
   body[data-active-view="review"] .services-split-table th:nth-child(2) {
-    width: 138px;
+    width: 170px;
   }
 
   body[data-active-view="review"] .services-split-table td:nth-child(3),
@@ -1787,7 +1790,13 @@ select {
 
   body[data-active-view="review"] .services-split-table td:nth-child(4),
   body[data-active-view="review"] .services-split-table th:nth-child(4) {
-    width: 60px;
+    width: 70px;
+  }
+
+  body[data-active-view="review"] .history-split-table th,
+  body[data-active-view="review"] .history-split-table td {
+    min-width: 96px;
+    width: 96px;
   }
 
   body[data-active-view="review"] .date-editor .date-picker-input {
@@ -1854,7 +1863,7 @@ select {
   body[data-active-view="review"] .progress-chart,
   body[data-active-view="review"] .measurement-table-card,
   body[data-active-view="review"] .trend-card {
-    padding: 8px;
+    padding: 10px;
   }
 
   body[data-active-view="review"] .progress-chart header {
@@ -1862,37 +1871,64 @@ select {
   }
 
   body[data-active-view="review"] .chart-row {
-    gap: 7px;
-    grid-template-columns: 104px 1fr 52px;
-    min-height: 28px;
+    gap: 8px;
+    grid-template-columns: 120px 1fr 54px;
+    min-height: 30px;
   }
 
   body[data-active-view="review"] .chart-row span,
   body[data-active-view="review"] .chart-row strong {
-    font-size: 10px;
+    font-size: 11px;
   }
 
   body[data-active-view="review"] .chart-track {
-    height: 16px;
+    height: 18px;
   }
 
   body[data-active-view="review"] .measurement-split-table th {
-    font-size: 8px;
-    padding: 3px;
+    font-size: 10px;
+    padding: 4px;
   }
 
   body[data-active-view="review"] .measurement-split-table thead tr:first-child th {
-    height: 30px;
+    height: 36px;
   }
 
   body[data-active-view="review"] .measurement-split-table thead tr:nth-child(2) th {
-    height: 44px;
+    height: 58px;
   }
 
   body[data-active-view="review"] .measurement-split-table td {
-    font-size: 8px;
-    height: 20px;
-    padding: 2px;
+    font-size: 10px;
+    height: 24px;
+    padding: 2px 4px;
+  }
+
+  body[data-active-view="review"] .measurement-edit-head input {
+    font-size: 10px;
+    min-height: 22px;
+    padding: 2px 4px;
+  }
+
+  body[data-active-view="review"] .date-editor .date-text-input {
+    border: 0;
+    border-radius: 0;
+    font-size: 10px;
+    height: 22px;
+    line-height: 22px;
+    padding-right: 18px;
+  }
+
+  body[data-active-view="review"] .date-editor .date-picker-input {
+    height: 18px;
+    min-height: 18px;
+    right: 1px;
+    width: 16px;
+  }
+
+  body[data-active-view="review"] .measurement-delta-input {
+    font-size: 11px;
+    min-height: 18px;
   }
 
   body[data-active-view="review"] .trend-svg {
@@ -1905,8 +1941,8 @@ select {
 
   body[data-active-view="panel"] #panelView,
   body[data-active-view="review"] #reviewView {
-    break-after: avoid;
-    break-before: avoid;
+    break-after: avoid-page;
+    break-before: avoid-page;
     page-break-after: avoid;
     page-break-before: avoid;
     overflow: hidden;
@@ -1919,8 +1955,8 @@ select {
   }
 
   body[data-active-view="panel"] .print-panel-card {
-    min-height: 86px;
-    padding: 12px;
+    min-height: 90px;
+    padding: 14px;
   }
 
   body[data-active-view="panel"] .print-logo {
@@ -1937,8 +1973,8 @@ select {
   }
 
   body[data-active-view="panel"] .review-stage header {
-    min-height: 38px;
-    padding: 6px 8px;
+    min-height: 40px;
+    padding: 7px 9px;
   }
 
   body[data-active-view="panel"] .review-stage header strong,
@@ -1948,7 +1984,7 @@ select {
   }
 
   body[data-active-view="panel"] .mini-matrix {
-    gap: 3px;
+    gap: 4px;
     padding: 8px;
   }
 
@@ -1962,9 +1998,15 @@ select {
   }
 
   body[data-active-view="panel"] .mini-dot {
-    border-radius: 3px;
+    border-radius: 2px;
     height: 12px;
     width: 12px;
+  }
+
+  body[data-active-view="review"] .measurement-table-card,
+  body[data-active-view="review"] .trend-card,
+  body[data-active-view="panel"] .print-panel-body {
+    page-break-inside: avoid;
   }
 
   .mini-dot.checked {
