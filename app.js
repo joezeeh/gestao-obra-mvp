@@ -2163,6 +2163,7 @@ function positionTrendTooltip(card, tooltip, event) {
 function renderReportHeader() {
   const report = document.createElement("article");
   report.className = "report-header";
+  const latest = state.measurements[state.measurements.length - 1];
 
   const logoBox = document.createElement("div");
   logoBox.className = "report-logo";
@@ -2184,11 +2185,21 @@ function renderReportHeader() {
   meta.textContent = parts.length > 0 ? parts.join(" | ") : "Dados da obra não informados";
 
   const updated = document.createElement("span");
-  updated.textContent = state.updatedAt ? `Atualizado em ${formatDateTime(state.updatedAt)}` : "Atualização não informada";
+  updated.textContent = latest?.measuredAt
+    ? `Atualizado em ${formatShortDate(latest.measuredAt)}`
+    : (state.updatedAt ? `Atualizado em ${formatDateTime(state.updatedAt)}` : "Atualização não informada");
 
   info.append(title, meta, updated);
 
-  report.append(logoBox, info);
+  const reportBadge = document.createElement("div");
+  reportBadge.className = "report-badge";
+  const reportTitle = document.createElement("strong");
+  reportTitle.textContent = "Relatório de desempenho físico de obra";
+  const reportMeasurement = document.createElement("span");
+  reportMeasurement.textContent = latest?.label || "Sem medição";
+  reportBadge.append(reportTitle, reportMeasurement);
+
+  report.append(logoBox, info, reportBadge);
   elements.summaryStrip.append(report);
 }
 
@@ -2249,7 +2260,8 @@ function renderProgressChart() {
     const value = document.createElement("strong");
     value.textContent = formatPercent(progress.percent);
 
-    if (progress.percent < 1) track.append(fill, doneCount, totalCount);
+    if (progress.percent <= 0) track.append(fill, totalCount);
+    else if (progress.percent < 1) track.append(fill, doneCount, totalCount);
     else track.append(fill, totalCount);
     row.append(label, track, value);
     chart.append(row);
