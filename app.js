@@ -1076,7 +1076,7 @@ async function uploadMeasurement() {
   }
 
   const sortOrder = state.measurements.length;
-  const label = `M${String(sortOrder + 1).padStart(2, "0")}`;
+  const label = formatMeasurementLabel(sortOrder);
   const measuredAt = state.updatedAt.slice(0, 10);
 
   await withRealtimeSuppressed(async () => {
@@ -1373,25 +1373,39 @@ function renderMeasurementSplitLayout() {
     createMeasurementHeader(latest?.label || "ATUAL", "current-label")
   );
 
-  visibleMeasurements.forEach((measurement) => {
+  visibleMeasurements.forEach((measurement, index) => {
     const th = createMeasurementHeader("", "measurement-edit-head history-label");
+    if (index === 0) th.classList.add("first-history-cell");
+    const editor = document.createElement("div");
+    editor.className = "measurement-label-editor";
     const label = document.createElement("input");
     label.value = measurement.label;
     label.setAttribute("aria-label", "Nome da medição");
     label.addEventListener("change", () => updateMeasurement(measurement.id, { label: label.value.trim() || measurement.label }));
-    th.append(label);
+    const remove = document.createElement("button");
+    remove.className = "measurement-remove-button";
+    remove.type = "button";
+    remove.textContent = "×";
+    remove.title = "Remover medição";
+    remove.setAttribute("aria-label", `Remover ${measurement.label}`);
+    remove.addEventListener("click", () => deleteMeasurement(measurement.id));
+    editor.append(label, remove);
+    th.append(editor);
     labelRow.append(th);
   });
 
-  Array.from({ length: historySlots - visibleMeasurements.length }).forEach(() => {
-    labelRow.append(createMeasurementHeader("", "history-placeholder-cell"));
+  Array.from({ length: historySlots - visibleMeasurements.length }).forEach((_, index) => {
+    const placeholder = createMeasurementHeader("", "history-placeholder-cell");
+    if (visibleMeasurements.length === 0 && index === 0) placeholder.classList.add("first-history-cell");
+    labelRow.append(placeholder);
   });
 
   const dateRow = document.createElement("tr");
   dateRow.append(createMeasurementHeader(latest ? formatCompactDate(latest.measuredAt) : "Sem medição", "current-date"));
 
-  visibleMeasurements.forEach((measurement) => {
+  visibleMeasurements.forEach((measurement, index) => {
     const th = createMeasurementHeader("", "measurement-edit-head history-date");
+    if (index === 0) th.classList.add("first-history-cell");
     th.append(createDateEditor(
       measurement.measuredAt,
       "Data da medição",
@@ -1405,8 +1419,10 @@ function renderMeasurementSplitLayout() {
     dateRow.append(th);
   });
 
-  Array.from({ length: historySlots - visibleMeasurements.length }).forEach(() => {
-    dateRow.append(createMeasurementHeader("", "history-placeholder-cell"));
+  Array.from({ length: historySlots - visibleMeasurements.length }).forEach((_, index) => {
+    const placeholder = createMeasurementHeader("", "history-placeholder-cell");
+    if (visibleMeasurements.length === 0 && index === 0) placeholder.classList.add("first-history-cell");
+    dateRow.append(placeholder);
   });
 
   thead.append(groupRow, labelRow, dateRow);
@@ -1431,6 +1447,7 @@ function renderMeasurementSplitLayout() {
       const completed = measurement.totals[stage.id]?.completed || 0;
       const delta = Math.max(0, completed - previous);
       const cell = createMeasurementCell("", "history-value-cell");
+      if (measurementOffset === 0) cell.classList.add("first-history-cell");
       const input = document.createElement("input");
       input.className = "measurement-delta-input";
       input.type = "number";
@@ -1441,8 +1458,10 @@ function renderMeasurementSplitLayout() {
       row.append(cell);
     });
 
-    Array.from({ length: historySlots - visibleMeasurements.length }).forEach(() => {
-      row.append(createMeasurementCell("", "history-placeholder-cell"));
+    Array.from({ length: historySlots - visibleMeasurements.length }).forEach((_, index) => {
+      const placeholder = createMeasurementCell("", "history-placeholder-cell");
+      if (visibleMeasurements.length === 0 && index === 0) placeholder.classList.add("first-history-cell");
+      row.append(placeholder);
     });
 
     tbody.append(row);
@@ -1474,8 +1493,9 @@ function renderMeasurementSplitLayout() {
     createMeasurementCell("", "gap")
   );
 
-  visibleMeasurements.forEach((measurement) => {
+  visibleMeasurements.forEach((measurement, index) => {
     const cell = createMeasurementCell("", "forecast-date-cell");
+    if (index === 0) cell.classList.add("first-history-cell");
     cell.append(createDateEditor(
       measurement.forecastFinishDate,
       `Tendência para término da ${measurement.label}`,
@@ -1486,8 +1506,10 @@ function renderMeasurementSplitLayout() {
     trendRow.append(cell);
   });
 
-  Array.from({ length: historySlots - visibleMeasurements.length }).forEach(() => {
-    trendRow.append(createMeasurementCell("", "history-placeholder-cell"));
+  Array.from({ length: historySlots - visibleMeasurements.length }).forEach((_, index) => {
+    const placeholder = createMeasurementCell("", "history-placeholder-cell");
+    if (visibleMeasurements.length === 0 && index === 0) placeholder.classList.add("first-history-cell");
+    trendRow.append(placeholder);
   });
   tbody.append(trendRow);
 
@@ -2023,6 +2045,7 @@ async function deleteMeasurement(measurementId) {
   if (!confirmed) return;
 
   state.measurements = state.measurements.filter((item) => item.id !== measurementId);
+  normalizeMeasurementSequence();
   saveAndRender();
 
   if (!remoteReady) return;
@@ -2036,12 +2059,26 @@ async function deleteMeasurement(measurementId) {
   await persistMeasurementOrder();
 }
 
+function normalizeMeasurementSequence() {
+  state.measurements.forEach((measurement, index) => {
+    measurement.sortOrder = index;
+    measurement.label = formatMeasurementLabel(index);
+  });
+}
+
+function formatMeasurementLabel(index) {
+  return `M${String(index + 1).padStart(2, "0")}`;
+}
+
 async function persistMeasurementOrder() {
   if (!remoteReady) return;
 
   await withRealtimeSuppressed(async () => {
     const updates = state.measurements.map((measurement, index) => (
-      supabaseClient.from("measurements").update({ sort_order: index }).eq("id", measurement.id)
+      supabaseClient
+        .from("measurements")
+        .update({ sort_order: index, label: measurement.label })
+        .eq("id", measurement.id)
     ));
     const results = await Promise.all(updates);
     results.forEach(({ error }) => error && console.error(error));
