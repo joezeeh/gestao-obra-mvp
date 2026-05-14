@@ -11,8 +11,13 @@
   --warning: #b7791f;
   --danger: #b42318;
   --shadow: 0 10px 30px rgba(23, 32, 42, 0.08);
-  --font-app: Aptos, Arial, Helvetica, sans-serif;
-  --measurement-line: #d7d7d7;
+  --font-app: Aptos, "Aptos Display", Calibri, Arial, Helvetica, sans-serif;
+  --measurement-dark: #595959;
+  --measurement-blue-dark: #17365d;
+  --measurement-blue-light: #a9bce0;
+  --measurement-subhead: #bfbfbf;
+  --measurement-trend: #34495e;
+  --measurement-line: #d9d9d9;
 }
 
 *,
@@ -966,8 +971,8 @@ select {
   border: 0;
   border-bottom: 1px solid var(--measurement-line);
   border-right: 1px solid var(--measurement-line);
-  height: 25px;
-  padding: 3px 7px;
+  height: 31px;
+  padding: 4px 10px;
   text-align: center;
   vertical-align: middle;
 }
@@ -977,9 +982,9 @@ select {
 }
 
 .measurement-excel-table th {
-  background: #bfbfbf;
+  background: var(--measurement-subhead);
   color: #000;
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 700;
 }
 
@@ -989,18 +994,18 @@ select {
 
 .measurement-excel-table td {
   background: #fff;
-  font-size: 14px;
+  font-size: 17px;
 }
 
 .measurement-excel-table .group {
-  background: #454545;
-  border-left: 1px solid #454545;
-  border-right: 1px solid #454545;
-  border-top: 1px solid #454545;
-  border-bottom: 5px solid #fff;
+  background: var(--measurement-dark);
+  border-left: 1px solid var(--measurement-dark);
+  border-right: 1px solid var(--measurement-dark);
+  border-top: 1px solid var(--measurement-dark);
+  border-bottom: 4px solid #fff;
   color: #fff;
-  font-size: 15px;
-  height: 24px;
+  font-size: 18px;
+  height: 34px;
   text-transform: uppercase;
 }
 
@@ -1010,15 +1015,15 @@ select {
 
 .measurement-excel-table .current-title,
 .measurement-excel-table .current-label {
-  background: #213a59;
-  border-left: 1px solid #213a59;
-  border-right: 1px solid #213a59;
-  border-top: 1px solid #213a59;
+  background: var(--measurement-blue-dark);
+  border-left: 1px solid var(--measurement-blue-dark);
+  border-right: 1px solid var(--measurement-blue-dark);
+  border-top: 1px solid var(--measurement-blue-dark);
   color: #fff;
 }
 
 .measurement-excel-table .current-title {
-  border-bottom: 5px solid #fff;
+  border-bottom: 4px solid #fff;
 }
 
 .measurement-excel-table .current-label {
@@ -1026,17 +1031,17 @@ select {
 }
 
 .measurement-excel-table .current-date {
-  background: #9fb6d8;
-  border-left: 1px solid #9fb6d8;
-  border-right: 1px solid #9fb6d8;
+  background: var(--measurement-blue-light);
+  border-left: 1px solid var(--measurement-blue-light);
+  border-right: 1px solid var(--measurement-blue-light);
   border-top: 1px solid #fff;
-  border-bottom: 1px solid #9fb6d8;
+  border-bottom: 1px solid var(--measurement-blue-light);
   color: #000;
 }
 
 .measurement-excel-table .subhead,
 .measurement-excel-table .history-label {
-  background: #bfbfbf;
+  background: var(--measurement-subhead);
   border-left: 1px solid #fff;
   border-right: 1px solid #fff;
   border-top: 0;
@@ -1044,24 +1049,24 @@ select {
 }
 
 .measurement-excel-table thead tr:nth-child(2) th:first-child {
-  border-left-color: #bfbfbf;
+  border-left-color: var(--measurement-subhead);
 }
 
 .measurement-excel-table thead tr:nth-child(2) th:nth-child(3) {
-  border-right-color: #bfbfbf;
+  border-right-color: var(--measurement-subhead);
 }
 
 .measurement-excel-table thead tr:nth-child(2) th:last-child,
 .measurement-excel-table thead tr:nth-child(3) th:last-child {
-  border-right-color: #bfbfbf;
+  border-right-color: var(--measurement-subhead);
 }
 
 .measurement-excel-table .history-date {
-  background: #bfbfbf;
+  background: var(--measurement-subhead);
   border-left: 1px solid #fff;
   border-right: 1px solid #fff;
   border-top: 0;
-  border-bottom: 1px solid #bfbfbf;
+  border-bottom: 1px solid var(--measurement-subhead);
 }
 
 .measurement-excel-table .gap,
@@ -1079,11 +1084,11 @@ select {
 .measurement-excel-table .current-progress-cell,
 .measurement-excel-table .history-value-cell,
 .measurement-excel-table .measurement-delta-input {
-  font-size: 15px;
+  font-size: 17px;
 }
 
 .measurement-excel-table .current-progress-cell {
-  background: #f4f7fb;
+  background: #f2f2f2;
   font-weight: 700;
 }
 
@@ -1094,11 +1099,12 @@ select {
 .measurement-excel-table .measurement-edit-head > input,
 .measurement-excel-table .measurement-edit-head .date-text-input,
 .measurement-excel-table .forecast-date-cell .date-text-input {
-  background: #fff;
-  border: 1px solid #c8d0d9;
-  border-radius: 4px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: #000;
   min-height: 22px;
-  padding: 2px 24px 2px 5px;
+  padding: 0;
   text-align: center;
   width: 100%;
 }
@@ -1118,7 +1124,7 @@ select {
 }
 
 .measurement-excel-table .date-editor .date-text-input {
-  font-size: 13px;
+  font-size: 17px;
   height: 22px;
   line-height: 22px;
 }
@@ -1130,15 +1136,16 @@ select {
   height: 18px;
   min-height: 18px;
   padding: 0;
-  right: 3px;
+  opacity: 0;
+  right: 0;
   width: 18px;
 }
 
 .measurement-excel-table .trend-label {
-  background: #34495f;
-  border-color: #34495f;
+  background: var(--measurement-trend);
+  border-color: var(--measurement-trend);
   color: #fff;
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 700;
   text-align: left;
   text-transform: uppercase;
@@ -1166,8 +1173,7 @@ select {
 .measurement-excel-table .measurement-separator-row td {
   background: #fff;
   border: 0;
-  border-top: 1px solid var(--measurement-line);
-  height: 8px;
+  height: 12px;
   padding: 0;
 }
 
