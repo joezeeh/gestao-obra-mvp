@@ -1344,10 +1344,10 @@ function renderMeasurementSplitLayout() {
     { className: "gap-col", width: "12px" },
     { className: "current-col", width: "112px" },
     { className: "gap-col", width: "12px" },
-    { className: "history-col", width: "104px" },
-    { className: "history-col", width: "104px" },
-    { className: "history-col", width: "104px" },
-    { className: "history-col", width: "104px" }
+    { className: "history-col", width: "118px" },
+    { className: "history-col", width: "118px" },
+    { className: "history-col", width: "118px" },
+    { className: "history-col", width: "118px" }
   ].forEach(({ width, className }) => {
     const col = document.createElement("col");
     if (width) col.style.width = width;
@@ -1446,6 +1446,25 @@ function renderMeasurementSplitLayout() {
 
     tbody.append(row);
   });
+
+  const separatorRow = document.createElement("tr");
+  separatorRow.className = "measurement-separator-row";
+  [
+    "",
+    "",
+    "",
+    "",
+    "gap",
+    "",
+    "gap",
+    "",
+    "",
+    "",
+    ""
+  ].forEach((className) => {
+    separatorRow.append(createMeasurementCell("", className));
+  });
+  tbody.append(separatorRow);
 
   const trendRow = document.createElement("tr");
   trendRow.className = "measurement-trend-row";
