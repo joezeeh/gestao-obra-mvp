@@ -1369,31 +1369,44 @@ select {
 }
 
 .measurement-label-editor input {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: #000 !important;
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  min-height: 22px !important;
+  padding-bottom: 0 !important;
+  padding-left: 0 !important;
   padding-right: 22px !important;
+  padding-top: 0 !important;
+  text-align: center !important;
 }
 
 .measurement-remove-button {
   align-items: center;
-  background: transparent;
-  border: 0;
-  color: #b42318;
+  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 3px;
+  color: var(--measurement-dark);
   cursor: pointer;
   display: flex;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 700;
-  height: 20px;
+  height: 16px;
   justify-content: center;
   line-height: 1;
   padding: 0;
   position: absolute;
-  right: 0;
+  right: 2px;
   top: 50%;
   transform: translateY(-50%);
-  width: 20px;
+  width: 16px;
 }
 
 .measurement-remove-button:hover {
-  color: #7a1a13;
+  background: #f8fafc;
+  color: #b42318;
 }
 
 .measurement-excel-table .measurement-edit-head > input,

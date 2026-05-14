@@ -1385,7 +1385,7 @@ function renderMeasurementSplitLayout() {
     const remove = document.createElement("button");
     remove.className = "measurement-remove-button";
     remove.type = "button";
-    remove.textContent = "×";
+    remove.textContent = "-";
     remove.title = "Remover medição";
     remove.setAttribute("aria-label", `Remover ${measurement.label}`);
     remove.addEventListener("click", () => deleteMeasurement(measurement.id));
@@ -2152,6 +2152,23 @@ function renderTrendChart() {
       className: `trend-value ${putBelow ? "below" : "above"}`
     };
   };
+  const valueLabels = points.map((point, index) => ({
+    ...valueLabelFor(point),
+    x: xFor(index),
+    pointY: yFor(point.time),
+    value: daysBetween(state.targetDeliveryDate, point.date)
+  }));
+  valueLabels.forEach((label, index) => {
+    const direction = label.className.includes("below") ? 1 : -1;
+    if (Math.abs(label.y - targetY) < 16) label.y += direction * 18;
+    for (let previousIndex = 0; previousIndex < index; previousIndex += 1) {
+      const previous = valueLabels[previousIndex];
+      if (Math.abs(label.x - previous.x) < 96 && Math.abs(label.y - previous.y) < 18) {
+        label.y = previous.y + direction * 20;
+      }
+    }
+    label.y = Math.max(top + 14, Math.min(height - bottom - 12, label.y));
+  });
 
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
@@ -2170,7 +2187,7 @@ function renderTrendChart() {
     <path d="${path}" class="trend-line" />
     ${points.map((point, index) => `
       <circle cx="${xFor(index)}" cy="${yFor(point.time)}" r="6" class="trend-point" data-tooltip="${escapeHtml(`${point.label}|Término: ${formatShortDate(point.date)}|${formatDeviationDays(daysBetween(state.targetDeliveryDate, point.date))}`)}" />
-      <text x="${xFor(index)}" y="${valueLabelFor(point).y}" class="${valueLabelFor(point).className}">${daysBetween(state.targetDeliveryDate, point.date)}</text>
+      <text x="${valueLabels[index].x}" y="${valueLabels[index].y}" class="${valueLabels[index].className}">${valueLabels[index].value}</text>
       <text x="${xFor(index)}" y="${height - 34}" class="trend-x">${point.label}</text>
     `).join("")}
   `;
