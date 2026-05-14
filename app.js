@@ -72,9 +72,7 @@ const elements = {
   stageName: document.querySelector("#stageName"),
   addStage: document.querySelector("#addStage"),
   stageList: document.querySelector("#stageList"),
-  stageMaskEditor: document.querySelector("#stageMaskEditor"),
   configLockToggle: document.querySelector("#configLockToggle"),
-  configLockStatus: document.querySelector("#configLockStatus"),
   floorList: document.querySelector("#floorList"),
   trackingStage: document.querySelector("#trackingStage"),
   previousStage: document.querySelector("#previousStage"),
@@ -730,9 +728,6 @@ function toggleConfigLock() {
 
 function applyConfigLockState() {
   const locked = isConfigLocked();
-  if (elements.configLockStatus) {
-    elements.configLockStatus.textContent = locked ? "Configuração bloqueada" : "Configuração desbloqueada";
-  }
   if (elements.configLockToggle) {
     elements.configLockToggle.textContent = locked ? "Desbloquear Configuração" : "Bloquear Configuração";
     elements.configLockToggle.classList.toggle("danger-button", locked);
@@ -772,7 +767,6 @@ function render() {
 
   renderStages();
   renderFloors();
-  renderStageMaskEditor();
   applyConfigLockState();
   renderStageSelect();
   renderTrackingMatrix();
@@ -878,6 +872,10 @@ function renderStages() {
 
     row.append(handle, order, nameInput, control, mask, remove);
     elements.stageList.append(row);
+
+    if (activeMaskStageId === stage.id) {
+      elements.stageList.append(renderStageMaskEditor(stage));
+    }
   });
 }
 
@@ -988,13 +986,7 @@ function renderFloors() {
   });
 }
 
-function renderStageMaskEditor() {
-  if (!elements.stageMaskEditor) return;
-  elements.stageMaskEditor.innerHTML = "";
-
-  const stage = getStage(activeMaskStageId);
-  if (!stage) return;
-
+function renderStageMaskEditor(stage) {
   const editor = document.createElement("article");
   editor.className = "mask-panel";
 
@@ -1025,7 +1017,7 @@ function renderStageMaskEditor() {
   grid.className = "mask-grid";
 
   if (isFloorControlled(stage.id)) {
-    grid.style.gridTemplateColumns = "124px 72px";
+    grid.style.gridTemplateColumns = "86px 32px";
     addMaskCell(grid, "", "mask-cell mask-header mask-corner");
     addMaskCell(grid, "Pav.", "mask-cell mask-header");
     state.floors.forEach((floor) => {
@@ -1034,7 +1026,7 @@ function renderStageMaskEditor() {
     });
   } else {
     const units = collectUnits();
-    grid.style.gridTemplateColumns = ["124px", ...units.map(() => "72px")].join(" ");
+    grid.style.gridTemplateColumns = ["86px", ...units.map(() => "32px")].join(" ");
     addMaskCell(grid, "", "mask-cell mask-header mask-corner");
     units.forEach((unit) => addMaskCell(grid, unit, "mask-cell mask-header"));
 
@@ -1051,8 +1043,7 @@ function renderStageMaskEditor() {
   }
 
   editor.append(header, grid);
-  elements.stageMaskEditor.append(editor);
-  applyConfigLockState();
+  return editor;
 }
 
 function renderStageSelect() {
@@ -2357,10 +2348,10 @@ function renderTrendChart() {
   const targetY = yFor(targetTime);
   const valueLabelFor = (point) => {
     const pointY = yFor(point.time);
-    const nearTarget = Math.abs(pointY - targetY) < 22;
+    const nearTarget = Math.abs(pointY - targetY) < 16;
     const putBelow = nearTarget || pointY < top + 28;
     return {
-      y: pointY + (putBelow ? 22 : -10),
+      y: pointY + (putBelow ? 18 : -8),
       className: `trend-value ${putBelow ? "below" : "above"}`
     };
   };
@@ -2372,11 +2363,11 @@ function renderTrendChart() {
   }));
   valueLabels.forEach((label, index) => {
     const direction = label.className.includes("below") ? 1 : -1;
-    if (Math.abs(label.y - targetY) < 24) label.y += direction * 26;
+    if (Math.abs(label.y - targetY) < 13) label.y += direction * 16;
     for (let previousIndex = 0; previousIndex < index; previousIndex += 1) {
       const previous = valueLabels[previousIndex];
-      if (Math.abs(label.x - previous.x) < 96 && Math.abs(label.y - previous.y) < 18) {
-        label.y = previous.y + direction * 20;
+      if (Math.abs(label.x - previous.x) < 86 && Math.abs(label.y - previous.y) < 15) {
+        label.y = previous.y + direction * 16;
       }
     }
     label.y = Math.max(top + 14, Math.min(height - bottom - 12, label.y));
