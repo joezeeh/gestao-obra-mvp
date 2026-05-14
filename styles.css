@@ -11,7 +11,7 @@
   --warning: #b7791f;
   --danger: #b42318;
   --shadow: 0 10px 30px rgba(23, 32, 42, 0.08);
-  --font-app: Aptos, "Aptos Display", Arial, Helvetica, sans-serif;
+  --font-app: Aptos, Arial, Helvetica, sans-serif;
 }
 
 *,
@@ -173,7 +173,7 @@ h2 {
   color: #f2f7fb;
   display: grid;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   gap: 8px;
   grid-template-columns: 24px minmax(0, 1fr);
   min-height: 40px;
@@ -838,7 +838,7 @@ select {
 .chart-count {
   color: #14324a;
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1;
   position: absolute;
   top: 50%;
@@ -952,7 +952,7 @@ select {
   background: #bfbfbf;
   color: #000;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .measurement-excel-table thead th {
@@ -967,6 +967,7 @@ select {
 .measurement-excel-table .group {
   background: #454545;
   border-color: #454545;
+  border-bottom: 4px solid #fff;
   color: #fff;
   font-size: 15px;
   height: 24px;
@@ -987,12 +988,14 @@ select {
 .measurement-excel-table .current-label {
   background: #213a59;
   border-color: #213a59;
+  border-left: 4px solid #fff;
+  border-right: 4px solid #fff;
   color: #fff;
 }
 
 .measurement-excel-table .current-title,
 .measurement-excel-table .current-label {
-  border-bottom-color: #fff;
+  border-bottom: 2px solid #fff;
 }
 
 .measurement-excel-table .current-date {
@@ -1033,7 +1036,7 @@ select {
 
 .measurement-excel-table .current-progress-cell {
   background: #f4f7fb;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .measurement-excel-table .measurement-edit-head {
@@ -1088,7 +1091,7 @@ select {
   border-color: #34495f;
   color: #fff;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 700;
   text-align: left;
   text-transform: uppercase;
 }
@@ -1096,6 +1099,15 @@ select {
 .measurement-excel-table .measurement-trend-row td {
   border: 1px solid #d9e2ee;
   height: 26px;
+}
+
+.measurement-excel-table tbody td:nth-child(6),
+.measurement-excel-table tbody td:nth-child(8) {
+  border-left: 1px solid #d9e2ee;
+}
+
+.measurement-excel-table tbody td:last-child {
+  border-right: 1px solid #d9e2ee;
 }
 
 .measurement-excel-table .measurement-trend-row .gap {
@@ -1108,6 +1120,12 @@ select {
   border-top: 1px solid #d9e2ee;
   height: 8px;
   padding: 0;
+}
+
+.measurement-excel-table .measurement-separator-row td:nth-child(6),
+.measurement-excel-table .measurement-separator-row td:nth-child(8),
+.measurement-excel-table .measurement-separator-row td:last-child {
+  border-color: #fff;
 }
 
 .measurement-excel-table .measurement-separator-row .gap {
@@ -1149,7 +1167,7 @@ select {
   border: 1px solid #d9dde3;
   color: #fff;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 700;
   padding: 5px 7px;
   text-align: center;
 }
@@ -1263,7 +1281,7 @@ select {
   color: #fff;
   display: flex;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 700;
   grid-column: 1 / 3;
   height: 38px;
   justify-content: flex-end;
@@ -1297,7 +1315,7 @@ select {
 }
 
 .services-split-table .measurement-forecast-row td {
-  font-weight: 800;
+  font-weight: 700;
   text-align: right;
 }
 
@@ -1351,7 +1369,7 @@ select {
 .current-block td {
   background: #b7e5cf;
   color: #061525;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .history-block {
@@ -1471,7 +1489,7 @@ select {
   border: 1px solid #d9dde3;
   color: #fff;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 700;
   height: 32px;
   padding: 5px 7px;
   text-align: center;
@@ -1521,7 +1539,7 @@ select {
 .measurement-forecast-row th:first-child,
 .measurement-forecast-row td:first-child {
   color: #fff;
-  font-weight: 800;
+  font-weight: 700;
   text-align: right;
 }
 
@@ -1759,7 +1777,7 @@ select {
 .review-stage header span {
   color: #d9e3ec;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .mini-matrix {
@@ -2236,7 +2254,7 @@ select {
   body[data-active-view="panel"] .review-stage header strong,
   body[data-active-view="panel"] .review-stage header span {
     font-size: 12px;
-    font-weight: 800;
+    font-weight: 700;
   }
 
   body[data-active-view="panel"] .mini-matrix {
@@ -2568,5 +2586,201 @@ select {
 
   body[data-active-view="review"] .measurement-excel-table .date-picker-input {
     display: none !important;
+  }
+}
+
+@media print {
+  @page dashboard-page {
+    size: A4 portrait;
+    margin: 7mm;
+  }
+
+  @page panel-page {
+    size: A3 landscape;
+    margin: 7mm;
+  }
+
+  html,
+  body,
+  .app-shell,
+  .workspace,
+  main {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  body[data-active-view="review"] main,
+  body[data-active-view="panel"] main {
+    overflow: hidden !important;
+    padding: 0 !important;
+  }
+
+  body[data-active-view="review"] #reviewView,
+  body[data-active-view="panel"] #panelView {
+    break-after: auto !important;
+    page-break-after: auto !important;
+  }
+
+  body[data-active-view="review"] #reviewView {
+    max-height: 283mm;
+    overflow: hidden !important;
+  }
+
+  body[data-active-view="panel"] #panelView {
+    max-height: 283mm;
+    overflow: hidden !important;
+  }
+
+  body[data-active-view="review"] .report-header {
+    gap: 10px !important;
+    grid-template-columns: 108px 1fr !important;
+    min-height: 74px !important;
+    padding: 8px !important;
+  }
+
+  body[data-active-view="review"] .report-logo {
+    height: 58px !important;
+  }
+
+  body[data-active-view="review"] .report-info h2 {
+    font-size: 18px !important;
+  }
+
+  body[data-active-view="review"] .dashboard-overview {
+    gap: 8px !important;
+    grid-template-columns: 0.34fr 0.66fr !important;
+  }
+
+  body[data-active-view="review"] .dashboard-photo-card {
+    height: 170px !important;
+    padding: 7px !important;
+  }
+
+  body[data-active-view="review"] .progress-chart,
+  body[data-active-view="review"] .measurement-table-card,
+  body[data-active-view="review"] .trend-card {
+    box-shadow: none !important;
+    padding: 8px !important;
+  }
+
+  body[data-active-view="review"] .progress-chart header {
+    margin-bottom: 8px !important;
+  }
+
+  body[data-active-view="review"] .chart-row {
+    column-gap: 6px !important;
+    grid-template-columns: 88px minmax(0, 1fr) 44px !important;
+    margin-bottom: 7px !important;
+    min-height: 26px !important;
+  }
+
+  body[data-active-view="review"] .chart-row span {
+    grid-column: auto !important;
+    font-size: 10px !important;
+  }
+
+  body[data-active-view="review"] .chart-row strong {
+    font-size: 10px !important;
+  }
+
+  body[data-active-view="review"] .chart-track {
+    height: 18px !important;
+    width: 100% !important;
+  }
+
+  body[data-active-view="review"] .measurement-excel-scroll {
+    overflow: visible !important;
+  }
+
+  body[data-active-view="review"] .measurement-excel-table {
+    min-width: 0 !important;
+    table-layout: fixed !important;
+    width: 100% !important;
+  }
+
+  body[data-active-view="review"] .measurement-excel-table col.id-col {
+    width: 4% !important;
+  }
+
+  body[data-active-view="review"] .measurement-excel-table col.stage-col {
+    width: 21% !important;
+  }
+
+  body[data-active-view="review"] .measurement-excel-table col.unit-col {
+    width: 7% !important;
+  }
+
+  body[data-active-view="review"] .measurement-excel-table col.total-col {
+    width: 8% !important;
+  }
+
+  body[data-active-view="review"] .measurement-excel-table col.gap-col {
+    width: 1.5% !important;
+  }
+
+  body[data-active-view="review"] .measurement-excel-table col.current-col {
+    width: 11% !important;
+  }
+
+  body[data-active-view="review"] .measurement-excel-table col.history-col {
+    width: 11.25% !important;
+  }
+
+  body[data-active-view="review"] .measurement-excel-table th,
+  body[data-active-view="review"] .measurement-excel-table td {
+    font-size: 9.5px !important;
+    height: 22px !important;
+    line-height: 1.15 !important;
+    padding: 2px 4px !important;
+  }
+
+  body[data-active-view="review"] .measurement-excel-table .group {
+    border-bottom: 3px solid #fff !important;
+    font-size: 10.5px !important;
+    height: 25px !important;
+  }
+
+  body[data-active-view="review"] .measurement-excel-table .current-title {
+    font-size: 10px !important;
+  }
+
+  body[data-active-view="review"] .measurement-excel-table .measurement-edit-head > input,
+  body[data-active-view="review"] .measurement-excel-table .date-text-input,
+  body[data-active-view="review"] .measurement-excel-table .measurement-delta-input {
+    appearance: none !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    color: #000 !important;
+    font-size: 9px !important;
+    font-weight: 700 !important;
+    height: auto !important;
+    line-height: 1.1 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    text-align: center !important;
+  }
+
+  body[data-active-view="review"] .measurement-excel-table .date-picker-input {
+    display: none !important;
+  }
+
+  body[data-active-view="review"] .measurement-excel-table .measurement-separator-row td {
+    height: 7px !important;
+    padding: 0 !important;
+  }
+
+  body[data-active-view="review"] .trend-svg {
+    max-height: 185px !important;
+  }
+
+  body[data-active-view="panel"] .print-panel-card {
+    margin-bottom: 8px !important;
+  }
+
+  body[data-active-view="panel"] .review-grid {
+    gap: 10px !important;
   }
 }
