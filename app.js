@@ -1938,6 +1938,15 @@ function renderTrendChart() {
   const yFor = (time) => top + innerHeight - ((time - minY) / (maxY - minY)) * innerHeight;
   const path = points.map((point, index) => `${index === 0 ? "M" : "L"} ${xFor(index)} ${yFor(point.time)}`).join(" ");
   const targetY = yFor(targetTime);
+  const valueLabelFor = (point) => {
+    const pointY = yFor(point.time);
+    const nearTarget = Math.abs(pointY - targetY) < 22;
+    const putBelow = nearTarget || pointY < top + 28;
+    return {
+      y: pointY + (putBelow ? 22 : -10),
+      className: `trend-value ${putBelow ? "below" : "above"}`
+    };
+  };
 
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
@@ -1955,8 +1964,8 @@ function renderTrendChart() {
     <text x="${width - right - 92}" y="${targetY - 8}" class="target-label">${formatShortDate(state.targetDeliveryDate)}</text>
     <path d="${path}" class="trend-line" />
     ${points.map((point, index) => `
-      <circle cx="${xFor(index)}" cy="${yFor(point.time)}" r="6" class="trend-point" data-tooltip="${escapeHtml(`${point.label}|Término: ${formatShortDate(point.date)}`)}" />
-      <text x="${xFor(index)}" y="${yFor(point.time) - 10}" class="trend-value">${daysBetween(state.targetDeliveryDate, point.date)}</text>
+      <circle cx="${xFor(index)}" cy="${yFor(point.time)}" r="6" class="trend-point" data-tooltip="${escapeHtml(`${point.label}|Término: ${formatShortDate(point.date)}|Desvio: ${daysBetween(state.targetDeliveryDate, point.date)}`)}" />
+      <text x="${xFor(index)}" y="${valueLabelFor(point).y}" class="${valueLabelFor(point).className}">${daysBetween(state.targetDeliveryDate, point.date)}</text>
       <text x="${xFor(index)}" y="${height - 18}" class="trend-x">${point.label}</text>
     `).join("")}
   `;
@@ -1971,8 +1980,8 @@ function renderTrendChart() {
 function wireTrendTooltip(card, tooltip) {
   card.querySelectorAll(".trend-point").forEach((point) => {
     point.addEventListener("mouseenter", (event) => {
-      const [title, subtitle] = event.currentTarget.dataset.tooltip.split("|");
-      tooltip.innerHTML = `<strong>${escapeHtml(title)}</strong><span>${escapeHtml(subtitle || "")}</span>`;
+      const [title, subtitle, deviation] = event.currentTarget.dataset.tooltip.split("|");
+      tooltip.innerHTML = `<strong>${escapeHtml(title)}</strong><span>${escapeHtml(subtitle || "")}</span><span>${escapeHtml(deviation || "")}</span>`;
       tooltip.classList.add("active");
       positionTrendTooltip(card, tooltip, event);
     });

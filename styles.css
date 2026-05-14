@@ -221,10 +221,11 @@ main {
 
 .config-hero {
   align-items: center;
-  background: var(--surface);
-  border: 1px solid var(--line);
+  background: #3f4852;
+  border: 1px solid #2f3740;
   border-radius: 8px;
   box-shadow: var(--shadow);
+  color: #fff;
   display: flex;
   justify-content: space-between;
   margin-bottom: 16px;
@@ -906,7 +907,7 @@ select {
   align-items: start;
   display: grid;
   gap: 8px;
-  grid-template-columns: 330px 96px 530px;
+  grid-template-columns: 385px 96px minmax(580px, 1fr);
   max-width: 100%;
   overflow-x: auto;
 }
@@ -958,22 +959,22 @@ select {
 
 .services-split-table td:nth-child(1),
 .services-split-table th:nth-child(1) {
-  width: 36px;
+  width: 30px;
 }
 
 .services-split-table td:nth-child(2),
 .services-split-table th:nth-child(2) {
-  width: 164px;
+  width: 190px;
 }
 
 .services-split-table td:nth-child(3),
 .services-split-table th:nth-child(3) {
-  width: 66px;
+  width: 74px;
 }
 
 .services-split-table td:nth-child(4),
 .services-split-table th:nth-child(4) {
-  width: 64px;
+  width: 90px;
 }
 
 .current-split-table {
@@ -991,8 +992,17 @@ select {
 
 .history-split-table th,
 .history-split-table td {
-  min-width: 106px;
-  width: 106px;
+  min-width: 112px;
+  width: 112px;
+}
+
+.history-split-table th {
+  font-size: 12px;
+}
+
+.history-split-table td,
+.history-split-table input {
+  font-size: 12px;
 }
 
 .measurement-split-table .measurement-spacer-row td {
@@ -1008,6 +1018,10 @@ select {
   color: #fff;
   font-weight: 400;
   height: 36px;
+}
+
+.history-split-table .measurement-forecast-row td {
+  vertical-align: middle;
 }
 
 .measurement-split-table .measurement-forecast-row .date-text-input {
