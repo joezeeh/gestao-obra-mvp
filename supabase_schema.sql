@@ -16,6 +16,9 @@ create table if not exists public.projects (
 alter table public.projects
 add column if not exists target_delivery_date date;
 
+alter table public.projects
+add column if not exists config_locked boolean not null default false;
+
 create table if not exists public.floors (
   id uuid primary key default gen_random_uuid(),
   project_id uuid not null references public.projects(id) on delete cascade,
@@ -50,6 +53,17 @@ create table if not exists public.progress (
   unique (stage_id, floor_id, unit_label)
 );
 
+create table if not exists public.stage_unit_masks (
+  id uuid primary key default gen_random_uuid(),
+  project_id uuid not null references public.projects(id) on delete cascade,
+  stage_id uuid not null references public.stages(id) on delete cascade,
+  floor_id uuid not null references public.floors(id) on delete cascade,
+  unit_label text not null,
+  enabled boolean not null default false,
+  created_at timestamptz not null default now(),
+  unique (stage_id, floor_id, unit_label)
+);
+
 create table if not exists public.measurements (
   id uuid primary key default gen_random_uuid(),
   project_id uuid not null references public.projects(id) on delete cascade,
@@ -74,6 +88,7 @@ create table if not exists public.measurement_stage_totals (
 create index if not exists floors_project_sort_idx on public.floors(project_id, sort_order);
 create index if not exists stages_project_sort_idx on public.stages(project_id, sort_order);
 create index if not exists progress_project_idx on public.progress(project_id);
+create index if not exists stage_unit_masks_project_idx on public.stage_unit_masks(project_id);
 create index if not exists measurements_project_sort_idx on public.measurements(project_id, sort_order);
 create index if not exists measurement_totals_project_idx on public.measurement_stage_totals(project_id);
 
@@ -81,6 +96,7 @@ alter table public.projects enable row level security;
 alter table public.floors enable row level security;
 alter table public.stages enable row level security;
 alter table public.progress enable row level security;
+alter table public.stage_unit_masks enable row level security;
 alter table public.measurements enable row level security;
 alter table public.measurement_stage_totals enable row level security;
 
@@ -129,6 +145,13 @@ with check (true);
 drop policy if exists "authenticated_all_progress" on public.progress;
 create policy "authenticated_all_progress"
 on public.progress for all
+to authenticated
+using (true)
+with check (true);
+
+drop policy if exists "authenticated_all_stage_unit_masks" on public.stage_unit_masks;
+create policy "authenticated_all_stage_unit_masks"
+on public.stage_unit_masks for all
 to authenticated
 using (true)
 with check (true);
@@ -206,6 +229,13 @@ begin
     where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'progress'
   ) then
     alter publication supabase_realtime add table public.progress;
+  end if;
+
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'stage_unit_masks'
+  ) then
+    alter publication supabase_realtime add table public.stage_unit_masks;
   end if;
 
   if not exists (

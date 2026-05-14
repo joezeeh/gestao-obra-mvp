@@ -13,9 +13,11 @@ const initialState = {
   targetDeliveryDate: "",
   builderLogo: "",
   projectPhoto: "",
+  configLocked: false,
   floors: [],
   stages: [],
   checks: {},
+  stageMasks: {},
   measurements: []
 };
 
@@ -25,6 +27,7 @@ let activeStageId = state.stages[0]?.id || "";
 let draggedFloorId = "";
 let draggedStageId = "";
 let stageSlideDirection = "";
+let activeMaskStageId = "";
 let touchStartX = 0;
 let currentUser = null;
 let currentProjectId = "";
@@ -69,6 +72,9 @@ const elements = {
   stageName: document.querySelector("#stageName"),
   addStage: document.querySelector("#addStage"),
   stageList: document.querySelector("#stageList"),
+  stageMaskEditor: document.querySelector("#stageMaskEditor"),
+  configLockToggle: document.querySelector("#configLockToggle"),
+  configLockStatus: document.querySelector("#configLockStatus"),
   floorList: document.querySelector("#floorList"),
   trackingStage: document.querySelector("#trackingStage"),
   previousStage: document.querySelector("#previousStage"),
@@ -151,6 +157,7 @@ function wireEvents() {
   });
 
   elements.addFloorMatrix.addEventListener("click", addFloorRowsFromMatrix);
+  elements.configLockToggle?.addEventListener("click", toggleConfigLock);
 
   elements.addStage.addEventListener("click", addStageFromInput);
   elements.stageName.addEventListener("keydown", (event) => {
@@ -280,13 +287,22 @@ async function loadRemoteWorkspace() {
 
   currentProjectId = project.id;
 
-  const [{ data: floors }, { data: stages }, { data: progressRows }, { data: measurements }, { data: measurementTotals }] = await Promise.all([
+  const [
+    { data: floors },
+    { data: stages },
+    { data: progressRows },
+    { data: measurements },
+    { data: measurementTotals },
+    { data: stageMaskRows, error: stageMaskError }
+  ] = await Promise.all([
     supabaseClient.from("floors").select("*").eq("project_id", currentProjectId).order("sort_order"),
     supabaseClient.from("stages").select("*").eq("project_id", currentProjectId).order("sort_order"),
     supabaseClient.from("progress").select("*").eq("project_id", currentProjectId),
     supabaseClient.from("measurements").select("*").eq("project_id", currentProjectId).order("sort_order"),
-    supabaseClient.from("measurement_stage_totals").select("*").eq("project_id", currentProjectId)
+    supabaseClient.from("measurement_stage_totals").select("*").eq("project_id", currentProjectId),
+    supabaseClient.from("stage_unit_masks").select("*").eq("project_id", currentProjectId)
   ]);
+  if (stageMaskError) console.warn("Máscaras por etapa ainda não estão disponíveis no banco.", stageMaskError);
 
   state = {
     projectName: project.name || "",
@@ -296,6 +312,7 @@ async function loadRemoteWorkspace() {
     targetDeliveryDate: project.target_delivery_date || "",
     builderLogo: project.logo_url || "",
     projectPhoto: project.photo_url || "",
+    configLocked: Boolean(project.config_locked),
     floors: (floors || []).map((floor) => {
       const savedUnits = Array.isArray(floor.unit_labels) ? floor.unit_labels.map(String).filter(Boolean) : [];
       return {
@@ -310,6 +327,7 @@ async function loadRemoteWorkspace() {
       trackingLevel: stage.tracking_level
     })),
     checks: buildChecks(progressRows || []),
+    stageMasks: buildStageMasks(stageMaskError ? [] : stageMaskRows || []),
     measurements: buildMeasurements(measurements || [], measurementTotals || [])
   };
 
@@ -365,6 +383,18 @@ function buildChecks(progressRows) {
   return checks;
 }
 
+function buildStageMasks(maskRows) {
+  const masks = {};
+
+  maskRows.forEach((row) => {
+    if (!masks[row.stage_id]) masks[row.stage_id] = {};
+    if (!masks[row.stage_id][row.floor_id]) masks[row.stage_id][row.floor_id] = {};
+    masks[row.stage_id][row.floor_id][row.unit_label] = row.enabled !== false;
+  });
+
+  return masks;
+}
+
 function buildMeasurements(measurements, totals) {
   const totalsByMeasurement = new Map();
 
@@ -398,6 +428,7 @@ function subscribeToRealtime() {
     .on("postgres_changes", { event: "*", schema: "public", table: "floors" }, reloadFromRealtime)
     .on("postgres_changes", { event: "*", schema: "public", table: "stages" }, reloadFromRealtime)
     .on("postgres_changes", { event: "*", schema: "public", table: "progress" }, reloadFromRealtime)
+    .on("postgres_changes", { event: "*", schema: "public", table: "stage_unit_masks" }, reloadFromRealtime)
     .on("postgres_changes", { event: "*", schema: "public", table: "measurements" }, reloadFromRealtime)
     .on("postgres_changes", { event: "*", schema: "public", table: "measurement_stage_totals" }, reloadFromRealtime)
     .subscribe();
@@ -451,10 +482,27 @@ async function saveProject() {
         logo_url: state.builderLogo || null,
         photo_url: state.projectPhoto || null,
         updated_at: state.updatedAt ? new Date(state.updatedAt).toISOString() : null,
-        target_delivery_date: state.targetDeliveryDate || null
+        target_delivery_date: state.targetDeliveryDate || null,
+        config_locked: Boolean(state.configLocked)
       })
       .eq("id", currentProjectId);
 
+    if (error && String(error.message || "").includes("config_locked")) {
+      const { error: fallbackError } = await supabaseClient
+        .from("projects")
+        .update({
+          name: state.projectName,
+          builder_name: state.builderName,
+          location: state.projectLocation,
+          logo_url: state.builderLogo || null,
+          photo_url: state.projectPhoto || null,
+          updated_at: state.updatedAt ? new Date(state.updatedAt).toISOString() : null,
+          target_delivery_date: state.targetDeliveryDate || null
+        })
+        .eq("id", currentProjectId);
+      if (fallbackError) console.error(fallbackError);
+      return;
+    }
     if (error) console.error(error);
   });
 }
@@ -572,6 +620,7 @@ async function persistFloorOrder() {
 }
 
 async function addFloorRowsFromMatrix() {
+  if (isConfigLocked()) return;
   const name = elements.floorMatrixName.value.trim();
   const unitCount = Number(elements.floorMatrixUnits.value);
   const repeatCount = Number(elements.floorMatrixRepeat.value);
@@ -613,6 +662,7 @@ async function addFloorRowsFromMatrix() {
 }
 
 async function addStageFromInput() {
+  if (isConfigLocked()) return;
   const name = elements.stageName.value.trim();
   if (!name) return;
 
@@ -660,8 +710,44 @@ function setActiveStage(stageId, direction = "") {
   render();
 }
 
+function isConfigLocked() {
+  return Boolean(state.configLocked);
+}
+
+function toggleConfigLock() {
+  if (isConfigLocked()) {
+    const confirmed = window.confirm("Desbloquear a configuração? Alterações em pavimentos, unidades, etapas ou máscaras podem alterar os totais das medições.");
+    if (!confirmed) return;
+  } else {
+    const confirmed = window.confirm("Bloquear a configuração da obra? Depois disso, pavimentos, etapas e máscaras ficam protegidos até você desbloquear.");
+    if (!confirmed) return;
+  }
+
+  state.configLocked = !state.configLocked;
+  saveProject();
+  saveAndRender();
+}
+
+function applyConfigLockState() {
+  const locked = isConfigLocked();
+  if (elements.configLockStatus) {
+    elements.configLockStatus.textContent = locked ? "Configuração bloqueada" : "Configuração desbloqueada";
+  }
+  if (elements.configLockToggle) {
+    elements.configLockToggle.textContent = locked ? "Desbloquear Configuração" : "Bloquear Configuração";
+    elements.configLockToggle.classList.toggle("danger-button", locked);
+    elements.configLockToggle.classList.toggle("ghost-button", !locked);
+  }
+
+  elements.setupView.querySelectorAll("input, select, button").forEach((control) => {
+    if (control === elements.configLockToggle) return;
+    control.disabled = locked;
+  });
+}
+
 function render() {
   document.body.dataset.activeView = activeView;
+  document.body.classList.toggle("config-locked", isConfigLocked());
 
   elements.tabs.forEach((tab) => {
     tab.classList.toggle("active", tab.dataset.view === activeView);
@@ -686,6 +772,8 @@ function render() {
 
   renderStages();
   renderFloors();
+  renderStageMaskEditor();
+  applyConfigLockState();
   renderStageSelect();
   renderTrackingMatrix();
   renderReview();
@@ -702,6 +790,7 @@ function renderStages() {
 
     row.addEventListener("dragover", (event) => event.preventDefault());
     row.addEventListener("drop", (event) => {
+      if (isConfigLocked()) return;
       event.preventDefault();
       reorderById(state.stages, draggedStageId, stage.id);
       persistStageOrder();
@@ -710,7 +799,7 @@ function renderStages() {
 
     const handle = document.createElement("span");
     handle.className = "drag-handle";
-    handle.draggable = true;
+    handle.draggable = !isConfigLocked();
     handle.textContent = "::";
     handle.title = "Arrastar para reordenar";
     handle.addEventListener("dragstart", (event) => {
@@ -736,6 +825,7 @@ function renderStages() {
     nameInput.dataset.col = "0";
     nameInput.setAttribute("aria-label", "Nome da etapa");
     nameInput.addEventListener("input", () => {
+      if (isConfigLocked()) return;
       stage.name = nameInput.value;
       queueSaveStage(stage.id);
       saveAndRender(false);
@@ -748,6 +838,7 @@ function renderStages() {
     controlInput.type = "checkbox";
     controlInput.checked = isFloorControlled(stage.id);
     controlInput.addEventListener("change", () => {
+      if (isConfigLocked()) return;
       stage.trackingLevel = controlInput.checked ? "floor" : "unit";
       queueSaveStage(stage.id);
       saveAndRender();
@@ -757,6 +848,18 @@ function renderStages() {
     controlText.textContent = "Por pavimento";
     control.append(controlInput, controlText);
 
+    const mask = document.createElement("button");
+    mask.className = "ghost-button mask-button";
+    mask.type = "button";
+    mask.textContent = activeMaskStageId === stage.id ? "Aberta" : "Editar";
+    mask.title = "Editar máscara da etapa";
+    mask.setAttribute("aria-label", `Editar máscara da etapa ${stage.name}`);
+    mask.addEventListener("click", () => {
+      if (isConfigLocked()) return;
+      activeMaskStageId = activeMaskStageId === stage.id ? "" : stage.id;
+      render();
+    });
+
     const remove = document.createElement("button");
     remove.className = "danger-button icon-button";
     remove.type = "button";
@@ -764,13 +867,16 @@ function renderStages() {
     remove.title = "Remover etapa";
     remove.setAttribute("aria-label", "Remover etapa");
     remove.addEventListener("click", () => {
+      if (isConfigLocked()) return;
       state.stages = state.stages.filter((item) => item.id !== stage.id);
       delete state.checks[stage.id];
+      delete state.stageMasks[stage.id];
+      if (activeMaskStageId === stage.id) activeMaskStageId = "";
       deleteStageRemote(stage.id);
       saveAndRender();
     });
 
-    row.append(handle, order, nameInput, control, remove);
+    row.append(handle, order, nameInput, control, mask, remove);
     elements.stageList.append(row);
   });
 }
@@ -785,6 +891,7 @@ function renderFloors() {
 
     row.addEventListener("dragover", (event) => event.preventDefault());
     row.addEventListener("drop", (event) => {
+      if (isConfigLocked()) return;
       event.preventDefault();
       reorderById(state.floors, draggedFloorId, floor.id);
       persistFloorOrder();
@@ -793,7 +900,7 @@ function renderFloors() {
 
     const handle = document.createElement("span");
     handle.className = "drag-handle";
-    handle.draggable = true;
+    handle.draggable = !isConfigLocked();
     handle.textContent = "::";
     handle.title = "Arrastar para reordenar";
     handle.addEventListener("dragstart", (event) => {
@@ -815,6 +922,7 @@ function renderFloors() {
     nameInput.dataset.col = "0";
     nameInput.setAttribute("aria-label", "Nome do pavimento");
     nameInput.addEventListener("input", () => {
+      if (isConfigLocked()) return;
       floor.name = nameInput.value;
       queueSaveFloor(floor.id);
       saveAndRender(false);
@@ -830,6 +938,7 @@ function renderFloors() {
     unitInput.dataset.col = "1";
     unitInput.setAttribute("aria-label", "Número de unidades");
     unitInput.addEventListener("change", () => {
+      if (isConfigLocked()) return;
       const count = Math.max(1, Number(unitInput.value) || 1);
       floor.units = generateUnitList(count);
       pruneChecksForFloor(floor.id, floor.units);
@@ -847,6 +956,7 @@ function renderFloors() {
     unitsInput.dataset.col = "2";
     unitsInput.setAttribute("aria-label", "Numeração das unidades");
     unitsInput.addEventListener("change", () => {
+      if (isConfigLocked()) return;
       const units = parseUnitLabels(unitsInput.value);
       if (units.length === 0) {
         unitsInput.value = floor.units.join(", ");
@@ -866,6 +976,7 @@ function renderFloors() {
     remove.title = "Remover pavimento";
     remove.setAttribute("aria-label", "Remover pavimento");
     remove.addEventListener("click", () => {
+      if (isConfigLocked()) return;
       state.floors = state.floors.filter((item) => item.id !== floor.id);
       removeChecksForFloor(floor.id);
       deleteFloorRemote(floor.id);
@@ -875,6 +986,73 @@ function renderFloors() {
     row.append(handle, nameInput, unitInput, unitsInput, remove);
     elements.floorList.append(row);
   });
+}
+
+function renderStageMaskEditor() {
+  if (!elements.stageMaskEditor) return;
+  elements.stageMaskEditor.innerHTML = "";
+
+  const stage = getStage(activeMaskStageId);
+  if (!stage) return;
+
+  const editor = document.createElement("article");
+  editor.className = "mask-panel";
+
+  const header = document.createElement("header");
+  const title = document.createElement("div");
+  const eyebrow = document.createElement("span");
+  eyebrow.textContent = "Máscara de Controle";
+  const name = document.createElement("strong");
+  name.textContent = stage.name;
+  title.append(eyebrow, name);
+
+  const actions = document.createElement("div");
+  actions.className = "mask-actions";
+  const enableAll = document.createElement("button");
+  enableAll.className = "ghost-button";
+  enableAll.type = "button";
+  enableAll.textContent = "Marcar tudo";
+  enableAll.addEventListener("click", () => setEntireStageMask(stage.id, true));
+  const disableAll = document.createElement("button");
+  disableAll.className = "ghost-button";
+  disableAll.type = "button";
+  disableAll.textContent = "Desmarcar tudo";
+  disableAll.addEventListener("click", () => setEntireStageMask(stage.id, false));
+  actions.append(enableAll, disableAll);
+  header.append(title, actions);
+
+  const grid = document.createElement("div");
+  grid.className = "mask-grid";
+
+  if (isFloorControlled(stage.id)) {
+    grid.style.gridTemplateColumns = "124px 72px";
+    addMaskCell(grid, "", "mask-cell mask-header mask-corner");
+    addMaskCell(grid, "Pav.", "mask-cell mask-header");
+    state.floors.forEach((floor) => {
+      addMaskCell(grid, floor.name, "mask-cell mask-floor");
+      grid.append(createMaskToggle(stage.id, floor.id, FLOOR_CHECK_KEY));
+    });
+  } else {
+    const units = collectUnits();
+    grid.style.gridTemplateColumns = ["124px", ...units.map(() => "72px")].join(" ");
+    addMaskCell(grid, "", "mask-cell mask-header mask-corner");
+    units.forEach((unit) => addMaskCell(grid, unit, "mask-cell mask-header"));
+
+    state.floors.forEach((floor) => {
+      addMaskCell(grid, floor.name, "mask-cell mask-floor");
+      units.forEach((unit) => {
+        if (!floor.units.includes(unit)) {
+          addMaskCell(grid, "", "mask-cell mask-empty");
+          return;
+        }
+        grid.append(createMaskToggle(stage.id, floor.id, unit));
+      });
+    });
+  }
+
+  editor.append(header, grid);
+  elements.stageMaskEditor.append(editor);
+  applyConfigLockState();
 }
 
 function renderStageSelect() {
@@ -912,13 +1090,16 @@ function renderTrackingMatrix() {
       const cell = document.createElement("div");
       cell.className = "matrix-cell";
 
-      if (floor.units.includes(unit)) {
+      if (floor.units.includes(unit) && isStageUnitApplicable(activeStageId, floor.id, unit)) {
         const button = document.createElement("button");
         button.className = `check-button ${isChecked(activeStageId, floor.id, unit) ? "checked" : ""}`;
         button.type = "button";
         button.setAttribute("aria-label", `${floor.name} unidade ${unit}`);
         button.addEventListener("click", () => toggleCheck(activeStageId, floor.id, unit));
         cell.append(button);
+      } else if (floor.units.includes(unit)) {
+        cell.classList.add("not-applicable");
+        cell.textContent = "-";
       }
 
       elements.trackingMatrix.append(cell);
@@ -944,12 +1125,17 @@ function renderFloorTrackingMatrix() {
     const cell = document.createElement("div");
     cell.className = "matrix-cell";
 
-    const button = document.createElement("button");
-    button.className = `check-button ${isChecked(activeStageId, floor.id, FLOOR_CHECK_KEY) ? "checked" : ""}`;
-    button.type = "button";
+    if (isStageUnitApplicable(activeStageId, floor.id, FLOOR_CHECK_KEY)) {
+      const button = document.createElement("button");
+      button.className = `check-button ${isChecked(activeStageId, floor.id, FLOOR_CHECK_KEY) ? "checked" : ""}`;
+      button.type = "button";
     button.setAttribute("aria-label", `${floor.name} concluído`);
     button.addEventListener("click", () => toggleCheck(activeStageId, floor.id, FLOOR_CHECK_KEY));
-    cell.append(button);
+      cell.append(button);
+    } else {
+      cell.classList.add("not-applicable");
+      cell.textContent = "-";
+    }
     elements.trackingMatrix.append(cell);
   });
 
@@ -1035,6 +1221,7 @@ function renderPanel() {
       units.forEach((unit) => {
         const dot = document.createElement("span");
         dot.className = `mini-dot ${isChecked(stage.id, floor.id, unit) ? "checked" : ""}`;
+        if (!isStageUnitApplicable(stage.id, floor.id, unit)) dot.className = "mini-dot mini-dot-empty";
         dots.append(dot);
       });
 
@@ -2368,7 +2555,33 @@ function addMatrixCell(text, className) {
   elements.trackingMatrix.append(cell);
 }
 
+function addMaskCell(parent, text, className) {
+  const cell = document.createElement("div");
+  cell.className = className;
+  cell.textContent = text;
+  parent.append(cell);
+}
+
+function createMaskToggle(stageId, floorId, unit) {
+  const cell = document.createElement("div");
+  cell.className = "mask-cell";
+
+  const button = document.createElement("button");
+  button.className = `mask-toggle ${isStageUnitApplicable(stageId, floorId, unit) ? "included" : "excluded"}`;
+  button.type = "button";
+  button.textContent = isStageUnitApplicable(stageId, floorId, unit) ? "✓" : "-";
+  button.setAttribute("aria-label", "Alternar unidade na máscara da etapa");
+  button.addEventListener("click", () => {
+    if (isConfigLocked()) return;
+    setStageUnitApplicable(stageId, floorId, unit, !isStageUnitApplicable(stageId, floorId, unit));
+  });
+
+  cell.append(button);
+  return cell;
+}
+
 function toggleCheck(stageId, floorId, unit) {
+  if (!isStageUnitApplicable(stageId, floorId, unit)) return;
   if (!state.checks[stageId]) state.checks[stageId] = {};
   if (!state.checks[stageId][floorId]) state.checks[stageId][floorId] = {};
   state.checks[stageId][floorId][unit] = !state.checks[stageId][floorId][unit];
@@ -2402,8 +2615,9 @@ async function saveProgressRemote(stageId, floorId, unit, done) {
 
 function calculateProgress(stageId) {
   if (isFloorControlled(stageId)) {
-    const total = state.floors.length;
-    const done = state.floors.filter((floor) => isChecked(stageId, floor.id, FLOOR_CHECK_KEY)).length;
+    const applicableFloors = state.floors.filter((floor) => isStageUnitApplicable(stageId, floor.id, FLOOR_CHECK_KEY));
+    const total = applicableFloors.length;
+    const done = applicableFloors.filter((floor) => isChecked(stageId, floor.id, FLOOR_CHECK_KEY)).length;
 
     return {
       total,
@@ -2412,9 +2626,13 @@ function calculateProgress(stageId) {
     };
   }
 
-  const total = state.floors.reduce((sum, floor) => sum + floor.units.length, 0);
+  const total = state.floors.reduce((sum, floor) => (
+    sum + floor.units.filter((unit) => isStageUnitApplicable(stageId, floor.id, unit)).length
+  ), 0);
   const done = state.floors.reduce((sum, floor) => {
-    const completed = floor.units.filter((unit) => isChecked(stageId, floor.id, unit)).length;
+    const completed = floor.units.filter((unit) => (
+      isStageUnitApplicable(stageId, floor.id, unit) && isChecked(stageId, floor.id, unit)
+    )).length;
     return sum + completed;
   }, 0);
 
@@ -2431,6 +2649,123 @@ function getStage(stageId) {
 
 function isFloorControlled(stageId) {
   return getStage(stageId)?.trackingLevel === "floor";
+}
+
+function isStageUnitApplicable(stageId, floorId, unit) {
+  return state.stageMasks?.[stageId]?.[floorId]?.[unit] !== false;
+}
+
+function setStageUnitApplicable(stageId, floorId, unit, applicable) {
+  if (isConfigLocked()) return;
+  if (!state.stageMasks) state.stageMasks = {};
+  if (!state.stageMasks[stageId]) state.stageMasks[stageId] = {};
+  if (!state.stageMasks[stageId][floorId]) state.stageMasks[stageId][floorId] = {};
+
+  if (applicable) {
+    delete state.stageMasks[stageId][floorId][unit];
+    if (Object.keys(state.stageMasks[stageId][floorId]).length === 0) delete state.stageMasks[stageId][floorId];
+    if (Object.keys(state.stageMasks[stageId]).length === 0) delete state.stageMasks[stageId];
+  } else {
+    state.stageMasks[stageId][floorId][unit] = false;
+  }
+
+  saveStageMaskRemote(stageId, floorId, unit, applicable);
+  saveAndRender();
+}
+
+function setEntireStageMask(stageId, applicable) {
+  if (isConfigLocked()) return;
+  const stage = getStage(stageId);
+  if (!stage) return;
+
+  if (isFloorControlled(stageId)) {
+    state.floors.forEach((floor) => setStageUnitApplicableLocal(stageId, floor.id, FLOOR_CHECK_KEY, applicable));
+  } else {
+    state.floors.forEach((floor) => {
+      floor.units.forEach((unit) => setStageUnitApplicableLocal(stageId, floor.id, unit, applicable));
+    });
+  }
+
+  saveEntireStageMaskRemote(stageId);
+  saveAndRender();
+}
+
+function setStageUnitApplicableLocal(stageId, floorId, unit, applicable) {
+  if (!state.stageMasks) state.stageMasks = {};
+  if (!state.stageMasks[stageId]) state.stageMasks[stageId] = {};
+  if (!state.stageMasks[stageId][floorId]) state.stageMasks[stageId][floorId] = {};
+  if (applicable) {
+    delete state.stageMasks[stageId][floorId][unit];
+    if (Object.keys(state.stageMasks[stageId][floorId]).length === 0) delete state.stageMasks[stageId][floorId];
+    if (Object.keys(state.stageMasks[stageId]).length === 0) delete state.stageMasks[stageId];
+  } else {
+    state.stageMasks[stageId][floorId][unit] = false;
+  }
+}
+
+async function saveStageMaskRemote(stageId, floorId, unit, applicable) {
+  if (!remoteReady || !currentProjectId) return;
+
+  await withRealtimeSuppressed(async () => {
+    const query = supabaseClient
+      .from("stage_unit_masks")
+      .delete()
+      .eq("stage_id", stageId)
+      .eq("floor_id", floorId)
+      .eq("unit_label", unit);
+
+    if (applicable) {
+      const { error } = await query;
+      if (error) console.error(error);
+      return;
+    }
+
+    const { error } = await supabaseClient
+      .from("stage_unit_masks")
+      .upsert({
+        project_id: currentProjectId,
+        stage_id: stageId,
+        floor_id: floorId,
+        unit_label: unit,
+        enabled: false
+      }, { onConflict: "stage_id,floor_id,unit_label" });
+    if (error) console.error(error);
+  });
+}
+
+async function saveEntireStageMaskRemote(stageId) {
+  if (!remoteReady || !currentProjectId) return;
+
+  const rows = [];
+  Object.entries(state.stageMasks[stageId] || {}).forEach(([floorId, units]) => {
+    Object.entries(units).forEach(([unit, enabled]) => {
+      if (enabled === false) {
+        rows.push({
+          project_id: currentProjectId,
+          stage_id: stageId,
+          floor_id: floorId,
+          unit_label: unit,
+          enabled: false
+        });
+      }
+    });
+  });
+
+  await withRealtimeSuppressed(async () => {
+    const { error: deleteError } = await supabaseClient
+      .from("stage_unit_masks")
+      .delete()
+      .eq("stage_id", stageId);
+    if (deleteError) {
+      console.error(deleteError);
+      return;
+    }
+    if (rows.length === 0) return;
+    const { error } = await supabaseClient
+      .from("stage_unit_masks")
+      .upsert(rows, { onConflict: "stage_id,floor_id,unit_label" });
+    if (error) console.error(error);
+  });
 }
 
 function collectUnits() {
@@ -2537,11 +2872,20 @@ function pruneChecksForFloor(floorId, units) {
       if (!allowed.has(unit)) delete stageChecks[floorId][unit];
     });
   });
+  Object.values(state.stageMasks).forEach((stageMasks) => {
+    if (!stageMasks[floorId]) return;
+    Object.keys(stageMasks[floorId]).forEach((unit) => {
+      if (!allowed.has(unit)) delete stageMasks[floorId][unit];
+    });
+  });
 }
 
 function removeChecksForFloor(floorId) {
   Object.values(state.checks).forEach((stageChecks) => {
     delete stageChecks[floorId];
+  });
+  Object.values(state.stageMasks).forEach((stageMasks) => {
+    delete stageMasks[floorId];
   });
 }
 
@@ -2564,9 +2908,11 @@ function loadState() {
       targetDeliveryDate: parsed.targetDeliveryDate || initialState.targetDeliveryDate,
       builderLogo: parsed.builderLogo || initialState.builderLogo,
       projectPhoto: parsed.projectPhoto || initialState.projectPhoto,
+      configLocked: Boolean(parsed.configLocked),
       floors: Array.isArray(parsed.floors) ? parsed.floors : initialState.floors,
       stages: Array.isArray(parsed.stages) ? parsed.stages.map(normalizeStage) : initialState.stages,
       checks: parsed.checks || {},
+      stageMasks: parsed.stageMasks || {},
       measurements: Array.isArray(parsed.measurements) ? parsed.measurements : initialState.measurements
     };
   } catch {
@@ -2608,9 +2954,11 @@ function importState(event) {
         targetDeliveryDate: imported.targetDeliveryDate || "",
         builderLogo: imported.builderLogo || "",
         projectPhoto: imported.projectPhoto || "",
+        configLocked: Boolean(imported.configLocked),
         floors: Array.isArray(imported.floors) ? imported.floors : [],
         stages: Array.isArray(imported.stages) ? imported.stages.map(normalizeStage) : [],
         checks: imported.checks || {},
+        stageMasks: imported.stageMasks || {},
         measurements: Array.isArray(imported.measurements) ? imported.measurements : []
       };
       activeStageId = state.stages[0]?.id || "";
