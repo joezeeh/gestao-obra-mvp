@@ -1678,16 +1678,17 @@ select {
 @media print {
   @page dashboard-page {
     size: A4 portrait;
-    margin: 7mm;
+    margin: 8mm;
   }
 
   @page panel-page {
     size: A3 landscape;
-    margin: 7mm;
+    margin: 8mm;
   }
 
   body {
     background: #fff;
+    margin: 0 !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -1754,8 +1755,8 @@ select {
   }
 
   body[data-active-view="review"] .measurement-split-layout {
-    gap: 6px;
-    grid-template-columns: 38% 11% 51%;
+    gap: 5px;
+    grid-template-columns: 278px 76px 360px;
     overflow: visible;
   }
 
@@ -1765,13 +1766,28 @@ select {
 
   body[data-active-view="review"] .history-split-table th,
   body[data-active-view="review"] .history-split-table td {
-    min-width: 92px;
-    width: 92px;
+    min-width: 72px;
+    width: 72px;
+  }
+
+  body[data-active-view="review"] .services-split-table td:nth-child(1),
+  body[data-active-view="review"] .services-split-table th:nth-child(1) {
+    width: 24px;
   }
 
   body[data-active-view="review"] .services-split-table td:nth-child(2),
   body[data-active-view="review"] .services-split-table th:nth-child(2) {
-    width: 160px;
+    width: 138px;
+  }
+
+  body[data-active-view="review"] .services-split-table td:nth-child(3),
+  body[data-active-view="review"] .services-split-table th:nth-child(3) {
+    width: 56px;
+  }
+
+  body[data-active-view="review"] .services-split-table td:nth-child(4),
+  body[data-active-view="review"] .services-split-table th:nth-child(4) {
+    width: 60px;
   }
 
   body[data-active-view="review"] .date-editor .date-picker-input {
@@ -1806,13 +1822,13 @@ select {
 
   body[data-active-view="review"] .dashboard-overview {
     gap: 6px;
-    grid-template-columns: 0.38fr 0.62fr;
+    grid-template-columns: 0.42fr 0.58fr;
   }
 
   body[data-active-view="review"] .dashboard-photo-card {
-    height: 185px;
+    height: 220px;
     min-height: 0;
-    padding: 4px;
+    padding: 6px;
   }
 
   body[data-active-view="review"] .report-header {
@@ -1846,9 +1862,9 @@ select {
   }
 
   body[data-active-view="review"] .chart-row {
-    gap: 5px;
-    grid-template-columns: 92px 1fr 48px;
-    min-height: 24px;
+    gap: 7px;
+    grid-template-columns: 104px 1fr 52px;
+    min-height: 28px;
   }
 
   body[data-active-view="review"] .chart-row span,
@@ -1857,26 +1873,26 @@ select {
   }
 
   body[data-active-view="review"] .chart-track {
-    height: 14px;
+    height: 16px;
   }
 
   body[data-active-view="review"] .measurement-split-table th {
-    font-size: 9px;
-    padding: 3px 4px;
+    font-size: 8px;
+    padding: 3px;
   }
 
   body[data-active-view="review"] .measurement-split-table thead tr:first-child th {
-    height: 28px;
+    height: 30px;
   }
 
   body[data-active-view="review"] .measurement-split-table thead tr:nth-child(2) th {
-    height: 42px;
+    height: 44px;
   }
 
   body[data-active-view="review"] .measurement-split-table td {
-    font-size: 9px;
+    font-size: 8px;
     height: 20px;
-    padding: 2px 3px;
+    padding: 2px;
   }
 
   body[data-active-view="review"] .trend-svg {
@@ -1890,37 +1906,65 @@ select {
   body[data-active-view="panel"] #panelView,
   body[data-active-view="review"] #reviewView {
     break-after: avoid;
+    break-before: avoid;
     page-break-after: avoid;
+    page-break-before: avoid;
+    overflow: hidden;
   }
 
-  .review-stage header {
-    min-height: 30px;
-    padding: 4px 6px;
+  body[data-active-view="panel"] main,
+  body[data-active-view="review"] main {
+    height: auto;
+    overflow: hidden;
   }
 
-  .review-stage header strong,
-  .review-stage header span {
-    font-size: 10px;
+  body[data-active-view="panel"] .print-panel-card {
+    min-height: 86px;
+    padding: 12px;
+  }
+
+  body[data-active-view="panel"] .print-logo {
+    height: 64px;
+  }
+
+  body[data-active-view="panel"] .print-info h2 {
+    font-size: 22px;
+  }
+
+  body[data-active-view="panel"] .print-info p,
+  body[data-active-view="panel"] .print-info span {
+    font-size: 12px;
+  }
+
+  body[data-active-view="panel"] .review-stage header {
+    min-height: 38px;
+    padding: 6px 8px;
+  }
+
+  body[data-active-view="panel"] .review-stage header strong,
+  body[data-active-view="panel"] .review-stage header span {
+    font-size: 12px;
     font-weight: 800;
   }
 
-  .mini-matrix {
-    gap: 2px;
-    padding: 5px;
-  }
-
-  .mini-row {
+  body[data-active-view="panel"] .mini-matrix {
     gap: 3px;
-    grid-template-columns: 48px 1fr;
+    padding: 8px;
   }
 
-  .mini-row strong {
-    font-size: 8px;
+  body[data-active-view="panel"] .mini-row {
+    gap: 5px;
+    grid-template-columns: 72px 1fr;
   }
 
-  .mini-dot {
-    height: 8px;
-    width: 8px;
+  body[data-active-view="panel"] .mini-row strong {
+    font-size: 11px;
+  }
+
+  body[data-active-view="panel"] .mini-dot {
+    border-radius: 3px;
+    height: 12px;
+    width: 12px;
   }
 
   .mini-dot.checked {
