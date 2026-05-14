@@ -824,10 +824,9 @@ select {
 }
 
 .chart-count {
-  color: #fff;
+  color: #14324a;
   font-size: 10px;
   font-weight: 800;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
   line-height: 1;
   position: absolute;
   top: 50%;
@@ -836,11 +835,18 @@ select {
 }
 
 .chart-count-done {
+  color: #fff;
   left: 7px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
 }
 
 .chart-count-total {
   right: 7px;
+}
+
+.chart-count-total.on-fill {
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
 }
 
 .chart-row strong {
@@ -898,8 +904,8 @@ select {
 .measurement-split-layout {
   align-items: start;
   display: grid;
-  gap: 12px;
-  grid-template-columns: minmax(420px, 500px) 118px minmax(0, 720px);
+  gap: 8px;
+  grid-template-columns: max-content 104px minmax(0, 660px);
 }
 
 .measurement-history-scroll {
@@ -942,29 +948,13 @@ select {
   text-align: center;
 }
 
-.services-split-table td:nth-child(1),
-.services-split-table th:nth-child(1) {
-  width: 42px;
-}
-
 .services-split-table td:nth-child(2),
 .services-split-table th:nth-child(2) {
   text-align: left;
-  width: 252px;
-}
-
-.services-split-table td:nth-child(3),
-.services-split-table th:nth-child(3) {
-  width: 94px;
-}
-
-.services-split-table td:nth-child(4),
-.services-split-table th:nth-child(4) {
-  width: 110px;
 }
 
 .current-split-table {
-  width: 118px;
+  width: 104px;
 }
 
 .current-split-table .current-progress-cell {
@@ -978,8 +968,8 @@ select {
 
 .history-split-table th,
 .history-split-table td {
-  min-width: 144px;
-  width: 144px;
+  min-width: 132px;
+  width: 132px;
 }
 
 .measurement-split-table .measurement-spacer-row td {
@@ -995,6 +985,10 @@ select {
   color: #fff;
   font-weight: 400;
   height: 36px;
+}
+
+.measurement-split-table .measurement-forecast-row .date-text-input {
+  font-weight: 400;
 }
 
 .services-split-table .measurement-forecast-row td {

@@ -1342,6 +1342,7 @@ function renderMeasurementSplitLayout() {
 function renderServicesSplitTable() {
   const table = document.createElement("table");
   table.className = "measurement-split-table services-split-table";
+  table.append(createServicesColgroup());
 
   const thead = document.createElement("thead");
   thead.innerHTML = `
@@ -1372,6 +1373,26 @@ function renderServicesSplitTable() {
 
   table.append(thead, tbody);
   return table;
+}
+
+function createServicesColgroup() {
+  const colgroup = document.createElement("colgroup");
+  const maxStageLength = Math.max("ETAPA".length, ...state.stages.map((stage) => stage.name.length));
+  const maxTotalLength = Math.max("QTD. TOTAL".length, ...state.stages.map((stage) => String(calculateProgress(stage.id).total).length));
+  const widths = [
+    `${Math.max(3, String(state.stages.length).length + 2)}ch`,
+    `${Math.min(30, Math.max(10, maxStageLength + 3))}ch`,
+    `${"UNIDADE".length + 2}ch`,
+    `${maxTotalLength + 2}ch`
+  ];
+
+  widths.forEach((width) => {
+    const col = document.createElement("col");
+    col.style.width = width;
+    colgroup.append(col);
+  });
+
+  return colgroup;
 }
 
 function renderCurrentSplitTable() {
@@ -1414,13 +1435,15 @@ function renderCurrentSplitTable() {
 
 function renderHistorySplitTable() {
   const measurements = state.measurements;
+  const columnCount = Math.max(5, measurements.length);
+  const placeholderCount = columnCount - measurements.length;
   const table = document.createElement("table");
   table.className = "measurement-split-table history-split-table";
 
   const thead = document.createElement("thead");
   const titleRow = document.createElement("tr");
   const title = document.createElement("th");
-  title.colSpan = Math.max(1, measurements.length);
+  title.colSpan = columnCount;
   title.textContent = "UNIDADES CONCLUÍDAS POR MEDIÇÃO";
   titleRow.append(title);
   const headerRow = document.createElement("tr");
@@ -1454,6 +1477,12 @@ function renderHistorySplitTable() {
     });
   }
 
+  Array.from({ length: placeholderCount }).forEach(() => {
+    const th = document.createElement("th");
+    th.className = "history-placeholder-cell";
+    headerRow.append(th);
+  });
+
   thead.append(titleRow, headerRow);
 
   const tbody = document.createElement("tbody");
@@ -1477,13 +1506,18 @@ function renderHistorySplitTable() {
         row.append(cell);
       });
     }
+    Array.from({ length: placeholderCount }).forEach(() => {
+      const cell = document.createElement("td");
+      cell.className = "history-placeholder-cell";
+      row.append(cell);
+    });
     tbody.append(row);
   });
 
   const spacer = document.createElement("tr");
   spacer.className = "measurement-spacer-row";
   const spacerCell = document.createElement("td");
-  spacerCell.colSpan = Math.max(1, measurements.length);
+  spacerCell.colSpan = columnCount;
   spacer.append(spacerCell);
   tbody.append(spacer);
 
@@ -1505,6 +1539,11 @@ function renderHistorySplitTable() {
       forecastRow.append(cell);
     });
   }
+  Array.from({ length: placeholderCount }).forEach(() => {
+    const cell = document.createElement("td");
+    cell.className = "history-placeholder-cell";
+    forecastRow.append(cell);
+  });
   tbody.append(forecastRow);
 
   table.append(thead, tbody);
@@ -1937,7 +1976,9 @@ function renderTrendChart() {
     <text x="${width - right - 92}" y="${targetY - 8}" class="target-label">${formatShortDate(state.targetDeliveryDate)}</text>
     <path d="${path}" class="trend-line" />
     ${points.map((point, index) => `
-      <circle cx="${xFor(index)}" cy="${yFor(point.time)}" r="4" class="trend-point" />
+      <circle cx="${xFor(index)}" cy="${yFor(point.time)}" r="5" class="trend-point">
+        <title>${escapeHtml(point.label)}\nTérmino: ${formatShortDate(point.date)}</title>
+      </circle>
       <text x="${xFor(index)}" y="${yFor(point.time) - 10}" class="trend-value">${daysBetween(state.targetDeliveryDate, point.date)}</text>
       <text x="${xFor(index)}" y="${height - 18}" class="trend-x">${point.label}</text>
     `).join("")}
@@ -2030,7 +2071,7 @@ function renderProgressChart() {
     doneCount.textContent = progress.done;
 
     const totalCount = document.createElement("span");
-    totalCount.className = "chart-count chart-count-total";
+    totalCount.className = `chart-count chart-count-total ${progress.percent >= 1 ? "on-fill" : ""}`;
     totalCount.textContent = progress.total;
 
     const value = document.createElement("strong");
