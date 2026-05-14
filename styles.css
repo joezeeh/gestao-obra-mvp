@@ -956,7 +956,7 @@ select {
 }
 
 .measurement-excel-table .stage-col {
-  width: 24%;
+  width: 22%;
 }
 
 .measurement-excel-table .gap-col {
@@ -1023,7 +1023,7 @@ select {
 }
 
 .measurement-excel-table .stage-subhead {
-  padding-left: 48px;
+  padding-left: 10px;
   text-align: left;
 }
 
@@ -1194,8 +1194,24 @@ select {
   width: 16px;
 }
 
+.measurement-excel-table .forecast-date-cell .date-text-input {
+  font-size: 15px;
+  padding-left: 3px;
+  padding-right: 22px;
+  text-align: left;
+}
+
 .measurement-excel-table .forecast-date-cell .date-picker-input {
-  display: none;
+  filter: none;
+  opacity: 1;
+}
+
+.measurement-excel-table .forecast-date-cell .date-picker-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: brightness(0) saturate(100%) invert(13%) sepia(22%) saturate(1815%) hue-rotate(182deg) brightness(92%) contrast(91%);
+  height: 16px;
+  opacity: 1;
+  width: 16px;
 }
 
 .measurement-excel-table .trend-label {
@@ -2837,7 +2853,7 @@ select {
   }
 
   body[data-active-view="review"] .measurement-excel-table col.stage-col {
-    width: 21% !important;
+    width: 20% !important;
   }
 
   body[data-active-view="review"] .measurement-excel-table col.unit-col {
@@ -2853,7 +2869,7 @@ select {
   }
 
   body[data-active-view="review"] .measurement-excel-table col.current-col {
-    width: 13% !important;
+    width: 15% !important;
   }
 
   body[data-active-view="review"] .measurement-excel-table col.history-col {

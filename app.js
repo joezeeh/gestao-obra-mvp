@@ -1338,11 +1338,11 @@ function renderMeasurementSplitLayout() {
   const colgroup = document.createElement("colgroup");
   [
     { className: "id-col", width: "3%" },
-    { className: "stage-col", width: "24%" },
+    { className: "stage-col", width: "22%" },
     { className: "unit-col", width: "7%" },
     { className: "total-col", width: "8%" },
     { className: "gap-col", width: "1%" },
-    { className: "current-col", width: "12%" },
+    { className: "current-col", width: "14%" },
     { className: "gap-col", width: "1%" },
     { className: "history-col", width: "11%" },
     { className: "history-col", width: "11%" },
@@ -1479,7 +1479,9 @@ function renderMeasurementSplitLayout() {
     cell.append(createDateEditor(
       measurement.forecastFinishDate,
       `Tendência para término da ${measurement.label}`,
-      (value) => updateMeasurement(measurement.id, { forecast_finish_date: value || null })
+      (value) => updateMeasurement(measurement.id, { forecast_finish_date: value || null }),
+      true,
+      { compact: true }
     ));
     trendRow.append(cell);
   });
