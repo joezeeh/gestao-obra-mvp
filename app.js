@@ -1331,11 +1331,28 @@ function renderMeasurementSplitLayout() {
   const historyTable = renderHistorySplitTable();
   historyScroller.append(historyTable);
 
+  const trendScroller = document.createElement("div");
+  trendScroller.className = "measurement-trend-scroll";
+  trendScroller.append(renderMeasurementTrendDates());
+
+  let syncingScroll = false;
+  const syncScroll = (source, target) => {
+    if (syncingScroll) return;
+    syncingScroll = true;
+    target.scrollLeft = source.scrollLeft;
+    window.requestAnimationFrame(() => {
+      syncingScroll = false;
+    });
+  };
+  historyScroller.addEventListener("scroll", () => syncScroll(historyScroller, trendScroller));
+  trendScroller.addEventListener("scroll", () => syncScroll(trendScroller, historyScroller));
+
   window.requestAnimationFrame(() => {
     historyScroller.scrollLeft = historyScroller.scrollWidth;
+    trendScroller.scrollLeft = trendScroller.scrollWidth;
   });
 
-  layout.append(renderServicesSplitTable(), renderCurrentSplitTable(), historyScroller);
+  layout.append(renderServicesSplitTable(), renderCurrentSplitTable(), historyScroller, renderMeasurementTrendLabel(), trendScroller);
   return layout;
 }
 
@@ -1361,14 +1378,6 @@ function renderServicesSplitTable() {
     `;
     tbody.append(row);
   });
-
-  const spacer = document.createElement("tr");
-  spacer.className = "measurement-spacer-row";
-  spacer.innerHTML = `<td colspan="4"></td>`;
-  const forecast = document.createElement("tr");
-  forecast.className = "measurement-forecast-row";
-  forecast.innerHTML = `<td colspan="4">Tendência para término</td>`;
-  tbody.append(spacer, forecast);
 
   table.append(thead, tbody);
   return table;
@@ -1399,14 +1408,6 @@ function renderCurrentSplitTable() {
     row.append(cell);
     tbody.append(row);
   });
-
-  const spacer = document.createElement("tr");
-  spacer.className = "measurement-spacer-row";
-  spacer.innerHTML = `<td></td>`;
-  const forecast = document.createElement("tr");
-  forecast.className = "measurement-forecast-row";
-  forecast.innerHTML = `<td></td>`;
-  tbody.append(spacer, forecast);
 
   table.append(thead, tbody);
   return table;
@@ -1493,40 +1494,48 @@ function renderHistorySplitTable() {
     tbody.append(row);
   });
 
-  const spacer = document.createElement("tr");
-  spacer.className = "measurement-spacer-row";
-  const spacerCell = document.createElement("td");
-  spacerCell.colSpan = columnCount;
-  spacer.append(spacerCell);
-  tbody.append(spacer);
+  table.append(thead, tbody);
+  return table;
+}
 
-  const forecastRow = document.createElement("tr");
-  forecastRow.className = "measurement-forecast-row";
+function renderMeasurementTrendLabel() {
+  const label = document.createElement("div");
+  label.className = "measurement-trend-label";
+  label.textContent = "Tendência para término";
+  return label;
+}
+
+function renderMeasurementTrendDates() {
+  const measurements = state.measurements;
+  const columnCount = Math.max(5, measurements.length);
+  const placeholderCount = columnCount - measurements.length;
+  const row = document.createElement("div");
+  row.className = "measurement-trend-dates";
+
   if (measurements.length === 0) {
-    const empty = document.createElement("td");
+    const empty = document.createElement("div");
     empty.textContent = "Sem medições";
-    forecastRow.append(empty);
+    row.append(empty);
   } else {
     measurements.forEach((measurement) => {
-      const cell = document.createElement("td");
+      const cell = document.createElement("div");
       cell.className = "forecast-date-cell";
       cell.append(createDateEditor(
         measurement.forecastFinishDate,
         `Tendência para término da ${measurement.label}`,
         (value) => updateMeasurement(measurement.id, { forecast_finish_date: value || null })
       ));
-      forecastRow.append(cell);
+      row.append(cell);
     });
   }
-  Array.from({ length: placeholderCount }).forEach(() => {
-    const cell = document.createElement("td");
-    cell.className = "history-placeholder-cell";
-    forecastRow.append(cell);
-  });
-  tbody.append(forecastRow);
 
-  table.append(thead, tbody);
-  return table;
+  Array.from({ length: placeholderCount }).forEach(() => {
+    const cell = document.createElement("div");
+    cell.className = "history-placeholder-cell";
+    row.append(cell);
+  });
+
+  return row;
 }
 
 function renderMeasurementColgroup() {
@@ -1964,7 +1973,7 @@ function renderTrendChart() {
     <text x="${width - right - 92}" y="${targetY - 8}" class="target-label">${formatShortDate(state.targetDeliveryDate)}</text>
     <path d="${path}" class="trend-line" />
     ${points.map((point, index) => `
-      <circle cx="${xFor(index)}" cy="${yFor(point.time)}" r="6" class="trend-point" data-tooltip="${escapeHtml(`${point.label}|Término: ${formatShortDate(point.date)}|Desvio: ${daysBetween(state.targetDeliveryDate, point.date)}`)}" />
+      <circle cx="${xFor(index)}" cy="${yFor(point.time)}" r="6" class="trend-point" data-tooltip="${escapeHtml(`${point.label}|Término: ${formatShortDate(point.date)}|${formatDeviationDays(daysBetween(state.targetDeliveryDate, point.date))}`)}" />
       <text x="${xFor(index)}" y="${valueLabelFor(point).y}" class="${valueLabelFor(point).className}">${daysBetween(state.targetDeliveryDate, point.date)}</text>
       <text x="${xFor(index)}" y="${height - 18}" class="trend-x">${point.label}</text>
     `).join("")}
@@ -2443,6 +2452,12 @@ function daysBetween(targetDate, forecastDate) {
   if (Number.isNaN(target.getTime()) || Number.isNaN(forecast.getTime())) return "";
 
   return Math.round((forecast - target) / (1000 * 60 * 60 * 24));
+}
+
+function formatDeviationDays(value) {
+  if (value === "" || value === null || value === undefined) return "Desvio:";
+  const unit = Math.abs(Number(value)) === 1 ? "dia" : "dias";
+  return `Desvio: ${value} ${unit}`;
 }
 
 function toDateTimeInputValue(date) {

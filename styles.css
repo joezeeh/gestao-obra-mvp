@@ -228,9 +228,9 @@ main {
   color: #fff;
   display: flex;
   justify-content: space-between;
-  margin-bottom: 16px;
-  min-height: 76px;
-  padding: 16px;
+  margin-bottom: 14px;
+  min-height: 58px;
+  padding: 10px 14px;
 }
 
 .config-grid {
@@ -907,12 +907,21 @@ select {
   align-items: start;
   display: grid;
   gap: 8px;
-  grid-template-columns: 360px 96px minmax(640px, 1fr);
+  grid-template-columns: 420px 104px minmax(680px, 1fr);
   max-width: 100%;
   overflow-x: auto;
+  --measurement-row-height: 28px;
+  --history-col-width: 132px;
 }
 
 .measurement-history-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: 100%;
+}
+
+.measurement-trend-scroll {
+  grid-column: 3;
   overflow-x: auto;
   overflow-y: hidden;
   width: 100%;
@@ -947,7 +956,8 @@ select {
   border: 1px solid #e7eaef;
   color: var(--text);
   font-size: 14px;
-  height: 28px;
+  height: var(--measurement-row-height);
+  line-height: 18px;
   padding: 3px 6px;
   text-align: center;
 }
@@ -959,30 +969,30 @@ select {
 
 .services-split-table td:nth-child(1),
 .services-split-table th:nth-child(1) {
-  width: 24px;
+  width: 30px;
 }
 
 .services-split-table td:nth-child(2),
 .services-split-table th:nth-child(2) {
-  width: 194px;
+  width: 244px;
 }
 
 .services-split-table td:nth-child(3),
 .services-split-table th:nth-child(3) {
-  width: 64px;
+  width: 56px;
 }
 
 .services-split-table td:nth-child(4),
 .services-split-table th:nth-child(4) {
-  width: 78px;
+  width: 90px;
 }
 
 .current-split-table {
-  width: 96px;
+  width: 104px;
 }
 
 .current-split-table thead th {
-  background: #021b34;
+  background: #12537c;
 }
 
 .current-split-table .current-progress-cell {
@@ -996,8 +1006,8 @@ select {
 
 .history-split-table th,
 .history-split-table td {
-  min-width: 122px;
-  width: 122px;
+  min-width: var(--history-col-width);
+  width: var(--history-col-width);
 }
 
 .history-split-table th {
@@ -1006,7 +1016,7 @@ select {
 
 .history-split-table td,
 .history-split-table input {
-  font-size: 12px;
+  font-size: 15px;
 }
 
 .measurement-split-table .measurement-spacer-row td {
@@ -1028,11 +1038,43 @@ select {
 .services-split-table tbody td:nth-child(4),
 .current-split-table tbody td,
 .history-split-table tbody td {
-  font-size: 16px;
+  font-size: 15px;
 }
 
 .services-split-table tbody td:nth-child(3) {
-  font-size: 15px;
+  font-size: 14px;
+}
+
+.measurement-trend-label {
+  align-items: center;
+  background: #6b7280;
+  border: 1px solid #d9dde3;
+  color: #fff;
+  display: flex;
+  font-size: 14px;
+  font-weight: 800;
+  grid-column: 1 / 3;
+  height: 38px;
+  justify-content: flex-end;
+  padding: 5px 10px;
+  text-align: right;
+}
+
+.measurement-trend-dates {
+  display: grid;
+  grid-auto-columns: var(--history-col-width);
+  grid-auto-flow: column;
+  min-width: max-content;
+}
+
+.measurement-trend-dates > div {
+  align-items: center;
+  background: #6b7280;
+  border: 1px solid #d9dde3;
+  display: flex;
+  height: 38px;
+  justify-content: center;
+  padding: 4px 6px;
 }
 
 .history-split-table .measurement-forecast-row td {
@@ -1291,6 +1333,7 @@ select {
   min-height: 28px;
   padding: 4px 6px;
   text-align: center;
+  width: 100%;
 }
 
 .measurement-date-stack {
@@ -1348,9 +1391,11 @@ select {
   background: transparent;
   border: 0;
   color: var(--text);
+  font-size: 15px;
   min-height: 22px;
   padding: 0;
   text-align: center;
+  width: 100%;
 }
 
 .trend-svg {
@@ -2010,6 +2055,237 @@ select {
   }
 
   .mini-dot.checked {
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
+  }
+}
+
+@media print {
+  @page dashboard-page {
+    size: A3 landscape;
+    margin: 8mm;
+  }
+
+  @page panel-page {
+    size: A3 landscape;
+    margin: 8mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  .app-shell,
+  .workspace,
+  main,
+  .view.active {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  .topbar,
+  .tabs,
+  #setupView,
+  #trackingView,
+  body[data-active-view="review"] #panelView,
+  body[data-active-view="panel"] #reviewView {
+    display: none !important;
+  }
+
+  body[data-active-view="review"] #reviewView,
+  body[data-active-view="panel"] #panelView {
+    display: block !important;
+    page-break-after: avoid !important;
+    break-after: avoid-page !important;
+  }
+
+  body[data-active-view="review"] #reviewView {
+    page: dashboard-page;
+  }
+
+  body[data-active-view="panel"] #panelView {
+    page: panel-page;
+  }
+
+  body[data-active-view="review"] .report-header {
+    gap: 14px !important;
+    grid-template-columns: 150px 1fr !important;
+    min-height: 96px !important;
+    padding: 14px !important;
+  }
+
+  body[data-active-view="review"] .report-logo {
+    height: 68px !important;
+  }
+
+  body[data-active-view="review"] .report-info h2 {
+    font-size: 24px !important;
+  }
+
+  body[data-active-view="review"] .dashboard-overview {
+    gap: 12px !important;
+    grid-template-columns: 0.34fr 0.66fr !important;
+  }
+
+  body[data-active-view="review"] .dashboard-photo-card {
+    height: 250px !important;
+    padding: 10px !important;
+  }
+
+  body[data-active-view="review"] .progress-chart,
+  body[data-active-view="review"] .measurement-table-card,
+  body[data-active-view="review"] .trend-card {
+    box-shadow: none !important;
+    padding: 12px !important;
+  }
+
+  body[data-active-view="review"] .chart-row {
+    gap: 10px !important;
+    grid-template-columns: 136px 1fr 58px !important;
+    min-height: 30px !important;
+  }
+
+  body[data-active-view="review"] .chart-track {
+    height: 20px !important;
+  }
+
+  body[data-active-view="review"] .measurement-table-scroll,
+  body[data-active-view="review"] .measurement-history-scroll,
+  body[data-active-view="review"] .measurement-trend-scroll {
+    overflow: visible !important;
+  }
+
+  body[data-active-view="review"] .measurement-split-layout {
+    --history-col-width: 132px;
+    gap: 8px !important;
+    grid-template-columns: 420px 104px minmax(660px, 1fr) !important;
+    overflow: visible !important;
+  }
+
+  body[data-active-view="review"] .measurement-split-table th {
+    font-size: 13px !important;
+    height: auto !important;
+    padding: 5px 6px !important;
+  }
+
+  body[data-active-view="review"] .measurement-split-table thead tr:first-child th {
+    height: 44px !important;
+  }
+
+  body[data-active-view="review"] .measurement-split-table thead tr:nth-child(2) th {
+    height: 70px !important;
+  }
+
+  body[data-active-view="review"] .measurement-split-table td {
+    font-size: 13px !important;
+    height: 28px !important;
+    line-height: 18px !important;
+    padding: 3px 6px !important;
+  }
+
+  body[data-active-view="review"] .services-split-table tbody td:nth-child(1),
+  body[data-active-view="review"] .services-split-table tbody td:nth-child(4),
+  body[data-active-view="review"] .current-split-table tbody td,
+  body[data-active-view="review"] .history-split-table tbody td,
+  body[data-active-view="review"] .measurement-delta-input {
+    font-size: 15px !important;
+  }
+
+  body[data-active-view="review"] .services-split-table td:nth-child(1),
+  body[data-active-view="review"] .services-split-table th:nth-child(1) {
+    width: 30px !important;
+  }
+
+  body[data-active-view="review"] .services-split-table td:nth-child(2),
+  body[data-active-view="review"] .services-split-table th:nth-child(2) {
+    width: 244px !important;
+  }
+
+  body[data-active-view="review"] .services-split-table td:nth-child(3),
+  body[data-active-view="review"] .services-split-table th:nth-child(3) {
+    width: 56px !important;
+  }
+
+  body[data-active-view="review"] .services-split-table td:nth-child(4),
+  body[data-active-view="review"] .services-split-table th:nth-child(4) {
+    width: 90px !important;
+  }
+
+  body[data-active-view="review"] .history-split-table th,
+  body[data-active-view="review"] .history-split-table td {
+    min-width: var(--history-col-width) !important;
+    width: var(--history-col-width) !important;
+  }
+
+  body[data-active-view="review"] .measurement-edit-head input,
+  body[data-active-view="review"] .date-editor .date-text-input,
+  body[data-active-view="review"] .measurement-delta-input {
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+  }
+
+  body[data-active-view="review"] .date-editor .date-picker-input,
+  body[data-active-view="review"] .mini-remove {
+    display: none !important;
+  }
+
+  body[data-active-view="review"] .measurement-trend-label,
+  body[data-active-view="review"] .measurement-trend-dates > div {
+    height: 38px !important;
+  }
+
+  body[data-active-view="review"] .trend-svg {
+    max-height: 280px !important;
+  }
+
+  body[data-active-view="panel"] .print-panel-card {
+    box-shadow: none !important;
+    min-height: 96px !important;
+    padding: 14px !important;
+  }
+
+  body[data-active-view="panel"] .review-grid {
+    gap: 12px !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  body[data-active-view="panel"] .review-stage {
+    box-shadow: none !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  body[data-active-view="panel"] .review-stage header {
+    min-height: 48px !important;
+    padding: 8px 10px !important;
+  }
+
+  body[data-active-view="panel"] .mini-matrix {
+    gap: 5px !important;
+    padding: 10px !important;
+  }
+
+  body[data-active-view="panel"] .mini-row {
+    gap: 5px !important;
+    grid-template-columns: 72px 1fr !important;
+  }
+
+  body[data-active-view="panel"] .mini-dot {
+    border-radius: 4px !important;
+    height: 14px !important;
+    width: 14px !important;
+  }
+
+  body[data-active-view="panel"] .mini-dot.checked {
     background: var(--accent) !important;
     border-color: var(--accent) !important;
   }
