@@ -21,7 +21,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Aptos, "Aptos Display", Arial, Helvetica, sans-serif;
 }
 
 button,
@@ -901,6 +901,135 @@ select {
 .measurement-table-scroll,
 .measurement-board-scroll {
   overflow: auto;
+}
+
+.measurement-excel-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.measurement-excel-table {
+  border-collapse: collapse;
+  color: var(--text);
+  table-layout: fixed;
+  width: 902px;
+}
+
+.measurement-excel-table th,
+.measurement-excel-table td {
+  border: 1px solid #d9dde3;
+  height: 25px;
+  padding: 3px 7px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.measurement-excel-table th {
+  background: #bfbfbf;
+  color: #000;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.measurement-excel-table td {
+  background: #fff;
+  font-size: 14px;
+}
+
+.measurement-excel-table .group {
+  background: #454545;
+  color: #fff;
+  font-size: 15px;
+  height: 24px;
+  text-transform: uppercase;
+}
+
+.measurement-excel-table .services-title {
+  text-align: left;
+}
+
+.measurement-excel-table .current-title,
+.measurement-excel-table .current-label {
+  background: #213a59;
+  color: #fff;
+}
+
+.measurement-excel-table .current-date {
+  background: #9fb6d8;
+  color: #000;
+}
+
+.measurement-excel-table .subhead,
+.measurement-excel-table .history-label {
+  background: #bfbfbf;
+}
+
+.measurement-excel-table .history-date {
+  background: #fff;
+}
+
+.measurement-excel-table .gap,
+.measurement-excel-gap-col {
+  background: #fff !important;
+  border-color: #fff !important;
+}
+
+.measurement-excel-table .stage-name-cell {
+  text-align: left;
+  white-space: nowrap;
+}
+
+.measurement-excel-table .number-cell,
+.measurement-excel-table .current-progress-cell,
+.measurement-excel-table .history-value-cell,
+.measurement-excel-table .measurement-delta-input {
+  font-size: 15px;
+}
+
+.measurement-excel-table .current-progress-cell {
+  background: #f4f7fb;
+  font-weight: 800;
+}
+
+.measurement-excel-table .measurement-edit-head {
+  padding: 3px 6px;
+}
+
+.measurement-excel-table .measurement-edit-head input,
+.measurement-excel-table .forecast-date-cell input,
+.measurement-excel-table .measurement-delta-input {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  min-height: 20px;
+  padding: 0;
+  text-align: center;
+  width: 100%;
+}
+
+.measurement-excel-table .date-editor .date-text-input {
+  height: 21px;
+  line-height: 21px;
+  padding-right: 22px;
+}
+
+.measurement-excel-table .date-editor .date-picker-input {
+  right: 0;
+  width: 20px;
+}
+
+.measurement-excel-table .trend-label {
+  background: #34495f;
+  border-color: #34495f;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.measurement-excel-table .measurement-trend-row td {
+  height: 26px;
 }
 
 .measurement-split-layout {
@@ -2288,5 +2417,37 @@ select {
   body[data-active-view="panel"] .mini-dot.checked {
     background: var(--accent) !important;
     border-color: var(--accent) !important;
+  }
+}
+
+@media print {
+  body[data-active-view="review"] .measurement-excel-scroll {
+    overflow: visible !important;
+  }
+
+  body[data-active-view="review"] .measurement-excel-table {
+    width: 902px !important;
+  }
+
+  body[data-active-view="review"] .measurement-excel-table th,
+  body[data-active-view="review"] .measurement-excel-table td {
+    height: 24px !important;
+    padding: 3px 6px !important;
+  }
+
+  body[data-active-view="review"] .measurement-excel-table .group {
+    height: 23px !important;
+  }
+
+  body[data-active-view="review"] .measurement-excel-table .measurement-edit-head input,
+  body[data-active-view="review"] .measurement-excel-table .forecast-date-cell input,
+  body[data-active-view="review"] .measurement-excel-table .measurement-delta-input {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  body[data-active-view="review"] .measurement-excel-table .date-picker-input {
+    display: none !important;
   }
 }

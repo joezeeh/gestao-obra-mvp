@@ -1323,37 +1323,173 @@ function renderMeasurementTable() {
 }
 
 function renderMeasurementSplitLayout() {
-  const layout = document.createElement("div");
-  layout.className = "measurement-split-layout";
+  const wrap = document.createElement("div");
+  wrap.className = "measurement-excel-scroll";
 
-  const historyScroller = document.createElement("div");
-  historyScroller.className = "measurement-history-scroll";
-  const historyTable = renderHistorySplitTable();
-  historyScroller.append(historyTable);
+  const measurements = state.measurements;
+  const visibleMeasurements = measurements.slice(-4);
+  const latest = measurements[measurements.length - 1];
+  const startIndex = Math.max(0, measurements.length - visibleMeasurements.length);
+  const historySlots = 4;
 
-  const trendScroller = document.createElement("div");
-  trendScroller.className = "measurement-trend-scroll";
-  trendScroller.append(renderMeasurementTrendDates());
+  const table = document.createElement("table");
+  table.className = "measurement-excel-table";
 
-  let syncingScroll = false;
-  const syncScroll = (source, target) => {
-    if (syncingScroll) return;
-    syncingScroll = true;
-    target.scrollLeft = source.scrollLeft;
-    window.requestAnimationFrame(() => {
-      syncingScroll = false;
-    });
-  };
-  historyScroller.addEventListener("scroll", () => syncScroll(historyScroller, trendScroller));
-  trendScroller.addEventListener("scroll", () => syncScroll(trendScroller, historyScroller));
-
-  window.requestAnimationFrame(() => {
-    historyScroller.scrollLeft = historyScroller.scrollWidth;
-    trendScroller.scrollLeft = trendScroller.scrollWidth;
+  const colgroup = document.createElement("colgroup");
+  [
+    "38px",
+    "176px",
+    "78px",
+    "92px",
+    "12px",
+    "110px",
+    "12px",
+    "96px",
+    "96px",
+    "96px",
+    "96px"
+  ].forEach((width, index) => {
+    const col = document.createElement("col");
+    col.style.width = width;
+    if (index === 4 || index === 6) col.className = "measurement-excel-gap-col";
+    colgroup.append(col);
   });
 
-  layout.append(renderServicesSplitTable(), renderCurrentSplitTable(), historyScroller, renderMeasurementTrendLabel(), trendScroller);
-  return layout;
+  const thead = document.createElement("thead");
+  const groupRow = document.createElement("tr");
+  groupRow.append(
+    createMeasurementHeader("SERVIÇOS", "group services-title", { colSpan: 4 }),
+    createMeasurementHeader("", "gap", { rowSpan: 3 }),
+    createMeasurementHeader("MEDIÇÃO ATUAL", "group current-title"),
+    createMeasurementHeader("", "gap", { rowSpan: 3 }),
+    createMeasurementHeader("UNIDADES CONCLUÍDAS POR MEDIÇÃO", "group history-title", { colSpan: historySlots })
+  );
+
+  const labelRow = document.createElement("tr");
+  labelRow.append(
+    createMeasurementHeader("ETAPA", "subhead", { colSpan: 2, rowSpan: 2 }),
+    createMeasurementHeader("UNID.", "subhead", { rowSpan: 2 }),
+    createMeasurementHeader("QTD. TOTAL", "subhead", { rowSpan: 2 }),
+    createMeasurementHeader(latest?.label || "ATUAL", "current-label")
+  );
+
+  visibleMeasurements.forEach((measurement) => {
+    const th = createMeasurementHeader("", "measurement-edit-head history-label");
+    const label = document.createElement("input");
+    label.value = measurement.label;
+    label.setAttribute("aria-label", "Nome da medição");
+    label.addEventListener("change", () => updateMeasurement(measurement.id, { label: label.value.trim() || measurement.label }));
+    th.append(label);
+    labelRow.append(th);
+  });
+
+  Array.from({ length: historySlots - visibleMeasurements.length }).forEach(() => {
+    labelRow.append(createMeasurementHeader("", "history-placeholder-cell"));
+  });
+
+  const dateRow = document.createElement("tr");
+  dateRow.append(createMeasurementHeader(latest ? formatShortDate(latest.measuredAt) : "Sem medição", "current-date"));
+
+  visibleMeasurements.forEach((measurement) => {
+    const th = createMeasurementHeader("", "measurement-edit-head history-date");
+    th.append(createDateEditor(
+      measurement.measuredAt,
+      "Data da medição",
+      (value) => {
+        if (!value) return;
+        updateMeasurement(measurement.id, { measured_at: value });
+      },
+      false
+    ));
+    dateRow.append(th);
+  });
+
+  Array.from({ length: historySlots - visibleMeasurements.length }).forEach(() => {
+    dateRow.append(createMeasurementHeader("", "history-placeholder-cell"));
+  });
+
+  thead.append(groupRow, labelRow, dateRow);
+
+  const tbody = document.createElement("tbody");
+  state.stages.forEach((stage, stageIndex) => {
+    const progress = calculateProgress(stage.id);
+    const row = document.createElement("tr");
+    row.append(
+      createMeasurementCell(stageIndex + 1, "number-cell"),
+      createMeasurementCell(stage.name, "stage-name-cell"),
+      createMeasurementCell(isFloorControlled(stage.id) ? "PAV." : "APTO"),
+      createMeasurementCell(progress.total, "number-cell"),
+      createMeasurementCell("", "gap"),
+      createMeasurementCell(latest?.totals[stage.id]?.completed || "", "current-progress-cell number-cell"),
+      createMeasurementCell("", "gap")
+    );
+
+    visibleMeasurements.forEach((measurement, measurementOffset) => {
+      const measurementIndex = startIndex + measurementOffset;
+      const previous = measurementIndex === 0 ? 0 : (measurements[measurementIndex - 1].totals[stage.id]?.completed || 0);
+      const completed = measurement.totals[stage.id]?.completed || 0;
+      const delta = Math.max(0, completed - previous);
+      const cell = createMeasurementCell("", "history-value-cell");
+      const input = document.createElement("input");
+      input.className = "measurement-delta-input";
+      input.type = "number";
+      input.min = "0";
+      input.value = delta > 0 ? String(delta) : "";
+      input.addEventListener("change", () => updateMeasurementDelta(measurement.id, stage.id, Number(input.value) || 0));
+      cell.append(input);
+      row.append(cell);
+    });
+
+    Array.from({ length: historySlots - visibleMeasurements.length }).forEach(() => {
+      row.append(createMeasurementCell("", "history-placeholder-cell"));
+    });
+
+    tbody.append(row);
+  });
+
+  const trendRow = document.createElement("tr");
+  trendRow.className = "measurement-trend-row";
+  trendRow.append(
+    createMeasurementCell("TENDÊNCIA PARA TÉRMINO", "trend-label", { colSpan: 6 }),
+    createMeasurementCell("", "gap")
+  );
+
+  visibleMeasurements.forEach((measurement) => {
+    const cell = createMeasurementCell("", "forecast-date-cell");
+    cell.append(createDateEditor(
+      measurement.forecastFinishDate,
+      `Tendência para término da ${measurement.label}`,
+      (value) => updateMeasurement(measurement.id, { forecast_finish_date: value || null })
+    ));
+    trendRow.append(cell);
+  });
+
+  Array.from({ length: historySlots - visibleMeasurements.length }).forEach(() => {
+    trendRow.append(createMeasurementCell("", "history-placeholder-cell"));
+  });
+  tbody.append(trendRow);
+
+  table.append(colgroup, thead, tbody);
+  wrap.append(table);
+  return wrap;
+}
+
+function createMeasurementHeader(text, className = "", options = {}) {
+  const th = document.createElement("th");
+  th.className = className;
+  th.textContent = text;
+  if (options.colSpan) th.colSpan = options.colSpan;
+  if (options.rowSpan) th.rowSpan = options.rowSpan;
+  return th;
+}
+
+function createMeasurementCell(text, className = "", options = {}) {
+  const td = document.createElement("td");
+  td.className = className;
+  td.textContent = text;
+  if (options.colSpan) td.colSpan = options.colSpan;
+  if (options.rowSpan) td.rowSpan = options.rowSpan;
+  return td;
 }
 
 function renderServicesSplitTable() {
@@ -2094,7 +2230,8 @@ function renderProgressChart() {
     const value = document.createElement("strong");
     value.textContent = formatPercent(progress.percent);
 
-    track.append(fill, doneCount, totalCount);
+    if (progress.percent < 1) track.append(fill, doneCount, totalCount);
+    else track.append(fill, totalCount);
     row.append(label, track, value);
     chart.append(row);
   });
