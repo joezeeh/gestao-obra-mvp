@@ -1000,6 +1000,24 @@ function renderPanel() {
 
     const miniMatrix = document.createElement("div");
     miniMatrix.className = "mini-matrix";
+    const maxColumns = isFloorControlled(stage.id)
+      ? 1
+      : Math.max(1, ...state.floors.map((floor) => floor.units.length));
+
+    const columnHeader = document.createElement("div");
+    columnHeader.className = "mini-row mini-column-row";
+    const columnLabelSpacer = document.createElement("strong");
+    columnLabelSpacer.textContent = "";
+    const columnLabels = document.createElement("div");
+    columnLabels.className = "mini-units mini-column-labels";
+    columnLabels.style.gridTemplateColumns = `repeat(${maxColumns}, 18px)`;
+    Array.from({ length: maxColumns }).forEach((_, index) => {
+      const label = document.createElement("span");
+      label.textContent = index + 1;
+      columnLabels.append(label);
+    });
+    columnHeader.append(columnLabelSpacer, columnLabels);
+    miniMatrix.append(columnHeader);
 
     state.floors.forEach((floor) => {
       const row = document.createElement("div");
@@ -1010,6 +1028,7 @@ function renderPanel() {
 
       const dots = document.createElement("div");
       dots.className = "mini-units";
+      dots.style.gridTemplateColumns = `repeat(${maxColumns}, 18px)`;
 
       const units = isFloorControlled(stage.id) ? [FLOOR_CHECK_KEY] : floor.units;
 
@@ -1017,6 +1036,12 @@ function renderPanel() {
         const dot = document.createElement("span");
         dot.className = `mini-dot ${isChecked(stage.id, floor.id, unit) ? "checked" : ""}`;
         dots.append(dot);
+      });
+
+      Array.from({ length: Math.max(0, maxColumns - units.length) }).forEach(() => {
+        const spacer = document.createElement("span");
+        spacer.className = "mini-dot mini-dot-empty";
+        dots.append(spacer);
       });
 
       row.append(floorName, dots);
@@ -1130,7 +1155,7 @@ function renderMeasurementTableLegacy() {
   card.className = "measurement-table-card";
 
   const title = document.createElement("h2");
-  title.textContent = "Unidades concluídas por medição";
+  title.textContent = "Unidades Concluídas por Medição";
   card.append(title);
 
   const scroller = document.createElement("div");
@@ -1314,7 +1339,7 @@ function renderMeasurementTable() {
 
   const header = document.createElement("header");
   const title = document.createElement("h2");
-  title.textContent = "Unidades concluídas por medição";
+  title.textContent = "Unidades Concluídas por Medição";
   header.append(title);
   card.append(header);
 
@@ -2136,9 +2161,9 @@ function renderTrendChart() {
   const innerHeight = height - top - bottom;
   const xFor = (index) => {
     if (points.length === 1) return left + innerWidth / 2;
-    const paddingRatio = points.length === 2 ? 0.28 : 0.1;
-    const usableWidth = innerWidth * (1 - paddingRatio * 2);
-    return left + innerWidth * paddingRatio + (usableWidth * index) / (points.length - 1);
+    const safeLeft = left + 118;
+    const safeRight = width - right - 118;
+    return safeLeft + ((safeRight - safeLeft) * index) / (points.length - 1);
   };
   const yFor = (time) => top + innerHeight - ((time - minY) / (maxY - minY)) * innerHeight;
   const path = points.map((point, index) => `${index === 0 ? "M" : "L"} ${xFor(index)} ${yFor(point.time)}`).join(" ");
@@ -2160,7 +2185,7 @@ function renderTrendChart() {
   }));
   valueLabels.forEach((label, index) => {
     const direction = label.className.includes("below") ? 1 : -1;
-    if (Math.abs(label.y - targetY) < 16) label.y += direction * 18;
+    if (Math.abs(label.y - targetY) < 24) label.y += direction * 26;
     for (let previousIndex = 0; previousIndex < index; previousIndex += 1) {
       const previous = valueLabels[previousIndex];
       if (Math.abs(label.x - previous.x) < 96 && Math.abs(label.y - previous.y) < 18) {
@@ -2169,6 +2194,13 @@ function renderTrendChart() {
     }
     label.y = Math.max(top + 14, Math.min(height - bottom - 12, label.y));
   });
+  const shouldAngleLabels = points.length > 5;
+  const xLabelFor = (point, index) => {
+    const x = xFor(index);
+    const y = height - 34;
+    if (!shouldAngleLabels) return `<text x="${x}" y="${y}" class="trend-x">${point.label}</text>`;
+    return `<text x="${x - 4}" y="${y + 6}" class="trend-x angled" transform="rotate(30 ${x - 4} ${y + 6})">${point.label}</text>`;
+  };
 
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
@@ -2182,13 +2214,13 @@ function renderTrendChart() {
     <line x1="${left}" y1="${top}" x2="${left}" y2="${height - bottom}" class="trend-axis" />
     <line x1="${left}" y1="${height - bottom}" x2="${width - right}" y2="${height - bottom}" class="trend-axis" />
     <line x1="${left}" y1="${targetY}" x2="${width - right}" y2="${targetY}" class="target-line" />
-    <text x="${left + 12}" y="${targetY - 8}" class="target-label">META</text>
-    <text x="${width - right - 92}" y="${targetY - 8}" class="target-label">${formatShortDate(state.targetDeliveryDate)}</text>
+    <text x="${left + 12}" y="${targetY - 8}" class="target-label target-label-left">META</text>
+    <text x="${width - right - 8}" y="${targetY - 8}" class="target-label target-label-right">${formatShortDate(state.targetDeliveryDate)}</text>
     <path d="${path}" class="trend-line" />
     ${points.map((point, index) => `
       <circle cx="${xFor(index)}" cy="${yFor(point.time)}" r="6" class="trend-point" data-tooltip="${escapeHtml(`${point.label}|Término: ${formatShortDate(point.date)}|${formatDeviationDays(daysBetween(state.targetDeliveryDate, point.date))}`)}" />
       <text x="${valueLabels[index].x}" y="${valueLabels[index].y}" class="${valueLabels[index].className}">${valueLabels[index].value}</text>
-      <text x="${xFor(index)}" y="${height - 34}" class="trend-x">${point.label}</text>
+      ${xLabelFor(point, index)}
     `).join("")}
   `;
 
@@ -2279,7 +2311,7 @@ function renderProgressChart() {
 
   const header = document.createElement("header");
   const title = document.createElement("h2");
-  title.textContent = "Avanço por etapa";
+  title.textContent = "Avanço por Etapa";
   header.append(title);
   chart.append(header);
 

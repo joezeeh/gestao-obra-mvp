@@ -1058,6 +1058,13 @@ select {
   margin-bottom: 14px;
 }
 
+.progress-chart h2,
+.measurement-table-card h2,
+.trend-card h2 {
+  font-size: 21px;
+  line-height: 1.2;
+}
+
 .chart-row {
   align-items: center;
   display: grid;
@@ -2083,6 +2090,10 @@ select {
   font-weight: 700;
 }
 
+.target-label-right {
+  text-anchor: end;
+}
+
 .trend-line {
   fill: none;
   stroke: #6c4bc1;
@@ -2130,6 +2141,10 @@ select {
   font-size: 13px;
   font-weight: 700;
   text-anchor: middle;
+}
+
+.trend-x.angled {
+  text-anchor: start;
 }
 
 .trend-y {
@@ -2205,7 +2220,7 @@ select {
 
 .review-stage header span {
   color: #d9e3ec;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
 }
 
@@ -2230,9 +2245,20 @@ select {
 }
 
 .mini-units {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   gap: 5px;
+}
+
+.mini-column-row {
+  margin-bottom: -1px;
+}
+
+.mini-column-labels span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
 }
 
 .mini-dot {
@@ -2246,6 +2272,10 @@ select {
 .mini-dot.checked {
   background: var(--accent);
   border-color: var(--accent);
+}
+
+.mini-dot-empty {
+  border-color: transparent;
 }
 
 @media (max-width: 980px) {
