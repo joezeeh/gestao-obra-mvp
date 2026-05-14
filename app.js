@@ -995,7 +995,7 @@ function renderPanel() {
     const title = document.createElement("strong");
     title.textContent = stage.name;
     const count = document.createElement("span");
-    count.textContent = `${progress.done}/${progress.total}`;
+    count.textContent = `${progress.done}/${progress.total} | ${formatPercent(progress.percent)}`;
     header.append(title, count);
 
     const miniMatrix = document.createElement("div");
@@ -1318,16 +1318,197 @@ function renderMeasurementTable() {
   header.append(title);
   card.append(header);
 
-  const scroller = document.createElement("div");
-  scroller.className = "measurement-table-scroll";
-
-  const table = document.createElement("table");
-  table.className = "measurement-table measurement-grid-table";
-  table.append(renderMeasurementColgroup(), renderMeasurementHead(), renderMeasurementBody());
-
-  scroller.append(table);
-  card.append(scroller);
+  card.append(renderMeasurementSplitLayout());
   elements.measurementReport.append(card);
+}
+
+function renderMeasurementSplitLayout() {
+  const layout = document.createElement("div");
+  layout.className = "measurement-split-layout";
+
+  const historyScroller = document.createElement("div");
+  historyScroller.className = "measurement-history-scroll";
+  const historyTable = renderHistorySplitTable();
+  historyScroller.append(historyTable);
+
+  window.requestAnimationFrame(() => {
+    historyScroller.scrollLeft = historyScroller.scrollWidth;
+  });
+
+  layout.append(renderServicesSplitTable(), renderCurrentSplitTable(), historyScroller);
+  return layout;
+}
+
+function renderServicesSplitTable() {
+  const table = document.createElement("table");
+  table.className = "measurement-split-table services-split-table";
+
+  const thead = document.createElement("thead");
+  thead.innerHTML = `
+    <tr><th colspan="4">SERVIÇOS</th></tr>
+    <tr><th>ID</th><th>ETAPA</th><th>UNIDADE</th><th>QTD. TOTAL</th></tr>
+  `;
+
+  const tbody = document.createElement("tbody");
+  state.stages.forEach((stage, index) => {
+    const progress = calculateProgress(stage.id);
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${index + 1}</td>
+      <td class="stage-name-cell">${escapeHtml(stage.name)}</td>
+      <td>${isFloorControlled(stage.id) ? "PAV." : "APTO"}</td>
+      <td>${progress.total}</td>
+    `;
+    tbody.append(row);
+  });
+
+  const spacer = document.createElement("tr");
+  spacer.className = "measurement-spacer-row";
+  spacer.innerHTML = `<td colspan="4"></td>`;
+  const forecast = document.createElement("tr");
+  forecast.className = "measurement-forecast-row";
+  forecast.innerHTML = `<td colspan="4">Tendência para término</td>`;
+  tbody.append(spacer, forecast);
+
+  table.append(thead, tbody);
+  return table;
+}
+
+function renderCurrentSplitTable() {
+  const latest = state.measurements[state.measurements.length - 1];
+  const table = document.createElement("table");
+  table.className = "measurement-split-table current-split-table";
+
+  const thead = document.createElement("thead");
+  const labelRow = document.createElement("tr");
+  const label = document.createElement("th");
+  label.textContent = latest?.label || "ATUAL";
+  labelRow.append(label);
+  const dateRow = document.createElement("tr");
+  const date = document.createElement("th");
+  date.textContent = latest ? formatShortDate(latest.measuredAt) : "Sem medição";
+  dateRow.append(date);
+  thead.append(labelRow, dateRow);
+
+  const tbody = document.createElement("tbody");
+  state.stages.forEach((stage) => {
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.className = "current-progress-cell";
+    cell.textContent = latest?.totals[stage.id]?.completed || "";
+    row.append(cell);
+    tbody.append(row);
+  });
+
+  const spacer = document.createElement("tr");
+  spacer.className = "measurement-spacer-row";
+  spacer.innerHTML = `<td></td>`;
+  const forecast = document.createElement("tr");
+  forecast.className = "measurement-forecast-row";
+  forecast.innerHTML = `<td></td>`;
+  tbody.append(spacer, forecast);
+
+  table.append(thead, tbody);
+  return table;
+}
+
+function renderHistorySplitTable() {
+  const measurements = state.measurements;
+  const table = document.createElement("table");
+  table.className = "measurement-split-table history-split-table";
+
+  const thead = document.createElement("thead");
+  const titleRow = document.createElement("tr");
+  const title = document.createElement("th");
+  title.colSpan = Math.max(1, measurements.length);
+  title.textContent = "UNIDADES CONCLUÍDAS POR MEDIÇÃO";
+  titleRow.append(title);
+  const headerRow = document.createElement("tr");
+
+  if (measurements.length === 0) {
+    const empty = document.createElement("th");
+    empty.textContent = "Sem medições";
+    headerRow.append(empty);
+  } else {
+    measurements.forEach((measurement) => {
+      const th = document.createElement("th");
+      th.className = "measurement-edit-head";
+      const label = document.createElement("input");
+      label.value = measurement.label;
+      label.setAttribute("aria-label", "Nome da medição");
+      label.addEventListener("change", () => updateMeasurement(measurement.id, { label: label.value.trim() || measurement.label }));
+      const measuredAt = createDateEditor(
+        measurement.measuredAt,
+        "Data da medição",
+        (value) => {
+          if (!value) return;
+          updateMeasurement(measurement.id, { measured_at: value });
+        },
+        false
+      );
+      const stack = document.createElement("div");
+      stack.className = "measurement-date-stack";
+      stack.append(label, measuredAt);
+      th.append(stack);
+      headerRow.append(th);
+    });
+  }
+
+  thead.append(titleRow, headerRow);
+
+  const tbody = document.createElement("tbody");
+  state.stages.forEach((stage) => {
+    const row = document.createElement("tr");
+    if (measurements.length === 0) {
+      row.append(document.createElement("td"));
+    } else {
+      measurements.forEach((measurement, measurementIndex) => {
+        const previous = measurementIndex === 0 ? 0 : (measurements[measurementIndex - 1].totals[stage.id]?.completed || 0);
+        const completed = measurement.totals[stage.id]?.completed || 0;
+        const delta = Math.max(0, completed - previous);
+        const cell = document.createElement("td");
+        const input = document.createElement("input");
+        input.className = "measurement-delta-input";
+        input.type = "number";
+        input.min = "0";
+        input.value = delta > 0 ? String(delta) : "";
+        input.addEventListener("change", () => updateMeasurementDelta(measurement.id, stage.id, Number(input.value) || 0));
+        cell.append(input);
+        row.append(cell);
+      });
+    }
+    tbody.append(row);
+  });
+
+  const spacer = document.createElement("tr");
+  spacer.className = "measurement-spacer-row";
+  const spacerCell = document.createElement("td");
+  spacerCell.colSpan = Math.max(1, measurements.length);
+  spacer.append(spacerCell);
+  tbody.append(spacer);
+
+  const forecastRow = document.createElement("tr");
+  forecastRow.className = "measurement-forecast-row";
+  if (measurements.length === 0) {
+    const empty = document.createElement("td");
+    empty.textContent = "Sem medições";
+    forecastRow.append(empty);
+  } else {
+    measurements.forEach((measurement) => {
+      const cell = document.createElement("td");
+      cell.className = "forecast-date-cell";
+      cell.append(createDateEditor(
+        measurement.forecastFinishDate,
+        `Tendência para término da ${measurement.label}`,
+        (value) => updateMeasurement(measurement.id, { forecast_finish_date: value || null })
+      ));
+      forecastRow.append(cell);
+    });
+  }
+  tbody.append(forecastRow);
+
+  table.append(thead, tbody);
+  return table;
 }
 
 function renderMeasurementColgroup() {
