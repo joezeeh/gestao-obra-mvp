@@ -1337,21 +1337,21 @@ function renderMeasurementSplitLayout() {
 
   const colgroup = document.createElement("colgroup");
   [
-    "38px",
-    "176px",
-    "78px",
-    "92px",
-    "12px",
-    "110px",
-    "12px",
-    "96px",
-    "96px",
-    "96px",
-    "96px"
-  ].forEach((width, index) => {
+    { className: "id-col", width: "38px" },
+    { className: "stage-col" },
+    { className: "unit-col", width: "78px" },
+    { className: "total-col", width: "92px" },
+    { className: "gap-col", width: "12px" },
+    { className: "current-col", width: "112px" },
+    { className: "gap-col", width: "12px" },
+    { className: "history-col", width: "104px" },
+    { className: "history-col", width: "104px" },
+    { className: "history-col", width: "104px" },
+    { className: "history-col", width: "104px" }
+  ].forEach(({ width, className }) => {
     const col = document.createElement("col");
-    col.style.width = width;
-    if (index === 4 || index === 6) col.className = "measurement-excel-gap-col";
+    if (width) col.style.width = width;
+    col.className = className;
     colgroup.append(col);
   });
 

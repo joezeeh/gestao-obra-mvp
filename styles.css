@@ -11,6 +11,7 @@
   --warning: #b7791f;
   --danger: #b42318;
   --shadow: 0 10px 30px rgba(23, 32, 42, 0.08);
+  --font-app: Aptos, "Aptos Display", Arial, Helvetica, sans-serif;
 }
 
 * {
@@ -21,13 +22,20 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: Aptos, "Aptos Display", Arial, Helvetica, sans-serif;
+  font-family: var(--font-app);
 }
 
 button,
 input,
 select {
   font: inherit;
+  font-family: var(--font-app);
+}
+
+table,
+textarea,
+svg text {
+  font-family: var(--font-app);
 }
 
 button {
@@ -911,8 +919,17 @@ select {
 .measurement-excel-table {
   border-collapse: collapse;
   color: var(--text);
-  table-layout: fixed;
-  width: 902px;
+  min-width: 100%;
+  table-layout: auto;
+  width: max-content;
+}
+
+.measurement-excel-table .stage-col {
+  min-width: 176px;
+}
+
+.measurement-excel-table .gap-col {
+  width: 12px;
 }
 
 .measurement-excel-table th,
@@ -969,7 +986,7 @@ select {
 }
 
 .measurement-excel-table .gap,
-.measurement-excel-gap-col {
+.measurement-excel-table .gap-col {
   background: #fff !important;
   border-color: #fff !important;
 }
@@ -996,7 +1013,16 @@ select {
 }
 
 .measurement-excel-table .measurement-edit-head input,
-.measurement-excel-table .forecast-date-cell input,
+.measurement-excel-table .forecast-date-cell input {
+  background: #fff;
+  border: 1px solid #c8d0d9;
+  border-radius: 4px;
+  min-height: 20px;
+  padding: 2px 5px;
+  text-align: center;
+  width: 100%;
+}
+
 .measurement-excel-table .measurement-delta-input {
   background: transparent;
   border: 0;
@@ -1029,7 +1055,12 @@ select {
 }
 
 .measurement-excel-table .measurement-trend-row td {
+  border-top: 1px solid #d9dde3;
   height: 26px;
+}
+
+.measurement-excel-table .measurement-trend-row .gap {
+  border-top-color: #fff !important;
 }
 
 .measurement-split-layout {
@@ -2426,7 +2457,8 @@ select {
   }
 
   body[data-active-view="review"] .measurement-excel-table {
-    width: 902px !important;
+    min-width: 100% !important;
+    width: max-content !important;
   }
 
   body[data-active-view="review"] .measurement-excel-table th,
@@ -2440,7 +2472,13 @@ select {
   }
 
   body[data-active-view="review"] .measurement-excel-table .measurement-edit-head input,
-  body[data-active-view="review"] .measurement-excel-table .forecast-date-cell input,
+  body[data-active-view="review"] .measurement-excel-table .forecast-date-cell input {
+    background: #fff !important;
+    border: 1px solid #c8d0d9 !important;
+    border-radius: 4px !important;
+    box-shadow: none !important;
+  }
+
   body[data-active-view="review"] .measurement-excel-table .measurement-delta-input {
     background: transparent !important;
     border: 0 !important;
