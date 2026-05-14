@@ -1342,7 +1342,7 @@ function renderMeasurementSplitLayout() {
     { className: "unit-col", width: "78px" },
     { className: "total-col", width: "92px" },
     { className: "gap-col", width: "12px" },
-    { className: "current-col", width: "112px" },
+    { className: "current-col", width: "142px" },
     { className: "gap-col", width: "12px" },
     { className: "history-col", width: "132px" },
     { className: "history-col", width: "132px" },
@@ -1358,7 +1358,10 @@ function renderMeasurementSplitLayout() {
   const thead = document.createElement("thead");
   const groupRow = document.createElement("tr");
   groupRow.append(
-    createMeasurementHeader("SERVIÇOS", "group services-title", { colSpan: 4 }),
+    createMeasurementHeader("SERVIÇOS", "group services-title"),
+    createMeasurementHeader("ETAPA", "group stage-title"),
+    createMeasurementHeader("", "group services-fill"),
+    createMeasurementHeader("", "group services-fill"),
     createMeasurementHeader("", "gap", { rowSpan: 3 }),
     createMeasurementHeader("MEDIÇÃO ATUAL", "group current-title"),
     createMeasurementHeader("", "gap", { rowSpan: 3 }),
@@ -1367,7 +1370,7 @@ function renderMeasurementSplitLayout() {
 
   const labelRow = document.createElement("tr");
   labelRow.append(
-    createMeasurementHeader("ETAPA", "subhead", { colSpan: 2, rowSpan: 2 }),
+    createMeasurementHeader("", "subhead", { colSpan: 2, rowSpan: 2 }),
     createMeasurementHeader("UNID.", "subhead", { rowSpan: 2 }),
     createMeasurementHeader("QTD. TOTAL", "subhead", { rowSpan: 2 }),
     createMeasurementHeader(latest?.label || "ATUAL", "current-label")
