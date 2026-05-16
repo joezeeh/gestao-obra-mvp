@@ -1068,7 +1068,7 @@ function renderTrackingMatrix() {
   }
 
   const units = collectUnits();
-  const columns = ["124px", ...units.map(() => "62px")].join(" ");
+  const columns = ["96px", ...units.map(() => "44px")].join(" ");
   elements.trackingMatrix.style.gridTemplateColumns = columns;
 
   addMatrixCell("", "matrix-cell header corner");
@@ -1105,7 +1105,7 @@ function renderTrackingMatrix() {
 }
 
 function renderFloorTrackingMatrix() {
-  elements.trackingMatrix.style.gridTemplateColumns = "124px 118px";
+  elements.trackingMatrix.style.gridTemplateColumns = "96px 74px";
 
   addMatrixCell("", "matrix-cell header corner");
   addMatrixCell("Pavimento", "matrix-cell header");
