@@ -1028,7 +1028,7 @@ function renderStageMaskEditor(stage) {
     const units = collectUnits();
     grid.style.gridTemplateColumns = ["86px", ...units.map(() => "32px")].join(" ");
     addMaskCell(grid, "", "mask-cell mask-header mask-corner");
-    units.forEach((unit) => addMaskCell(grid, unit, "mask-cell mask-header"));
+    units.forEach((unit) => grid.append(createMaskColumnToggle(stage.id, unit)));
 
     state.floors.forEach((floor) => {
       addMaskCell(grid, floor.name, "mask-cell mask-floor");
@@ -1192,7 +1192,7 @@ function renderPanel() {
     columnLabels.style.gridTemplateColumns = `repeat(${maxColumns}, 18px)`;
     Array.from({ length: maxColumns }).forEach((_, index) => {
       const label = document.createElement("span");
-      label.textContent = index + 1;
+      label.textContent = String(index + 1).padStart(2, "0");
       columnLabels.append(label);
     });
     columnHeader.append(columnLabelSpacer, columnLabels);
@@ -2563,7 +2563,6 @@ function createMaskToggle(stageId, floorId, unit) {
   const button = document.createElement("button");
   button.className = `mask-toggle ${isStageUnitApplicable(stageId, floorId, unit) ? "included" : "excluded"}`;
   button.type = "button";
-  button.textContent = isStageUnitApplicable(stageId, floorId, unit) ? "✓" : "-";
   button.setAttribute("aria-label", "Alternar unidade na máscara da etapa");
   button.addEventListener("click", () => {
     if (isConfigLocked()) return;
@@ -2571,6 +2570,21 @@ function createMaskToggle(stageId, floorId, unit) {
   });
 
   cell.append(button);
+  return cell;
+}
+
+function createMaskColumnToggle(stageId, unit) {
+  const floorsWithUnit = state.floors.filter((floor) => floor.units.includes(unit));
+  const allIncluded = floorsWithUnit.length > 0 && floorsWithUnit.every((floor) => isStageUnitApplicable(stageId, floor.id, unit));
+  const cell = document.createElement("button");
+  cell.className = `mask-cell mask-header mask-column-toggle ${allIncluded ? "included" : "excluded"}`;
+  cell.type = "button";
+  cell.textContent = unit;
+  cell.setAttribute("aria-label", `Alternar coluna ${unit} na máscara da etapa`);
+  cell.addEventListener("click", () => {
+    if (isConfigLocked()) return;
+    setStageUnitColumnApplicable(stageId, unit, !allIncluded);
+  });
   return cell;
 }
 
@@ -2715,6 +2729,15 @@ function setEntireStageMask(stageId, applicable) {
     });
   }
 
+  saveEntireStageMaskRemote(stageId);
+  saveAndRender();
+}
+
+function setStageUnitColumnApplicable(stageId, unit, applicable) {
+  if (isConfigLocked()) return;
+  state.floors.forEach((floor) => {
+    if (floor.units.includes(unit)) setStageUnitApplicableLocal(stageId, floor.id, unit, applicable);
+  });
   saveEntireStageMaskRemote(stageId);
   saveAndRender();
 }

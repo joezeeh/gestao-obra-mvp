@@ -983,6 +983,23 @@ select {
   padding: 3px;
 }
 
+.mask-column-toggle {
+  appearance: none;
+  border-left: 0;
+  border-top: 0;
+  color: #0f172a;
+  cursor: pointer;
+  font: inherit;
+}
+
+.mask-column-toggle.included {
+  background: #d9f2e4;
+}
+
+.mask-column-toggle.excluded {
+  background: #e5e7eb;
+}
+
 .mask-header,
 .mask-floor {
   background: #eef2f5;
@@ -1004,8 +1021,8 @@ select {
 
 .mask-toggle {
   align-items: center;
-  border: 1px solid #8f98a3;
-  border-radius: 5px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
   display: flex;
   font-weight: 700;
   height: 18px;
@@ -1016,12 +1033,11 @@ select {
 .mask-toggle.included {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
 }
 
 .mask-toggle.excluded {
-  background: #fff;
-  color: var(--muted);
+  background: #d1d5db;
+  border-color: #c4cad3;
 }
 
 .draggable-row {
@@ -1049,15 +1065,21 @@ select {
 }
 
 .drag-handle::before {
-  background: currentColor;
-  border-radius: 50%;
-  box-shadow: 7px 0 0 currentColor, 0 7px 0 currentColor, 7px 7px 0 currentColor;
+  background:
+    radial-gradient(circle, currentColor 0 2px, transparent 2.2px) 0 0 / 8px 8px,
+    radial-gradient(circle, currentColor 0 2px, transparent 2.2px) 8px 0 / 8px 8px,
+    radial-gradient(circle, currentColor 0 2px, transparent 2.2px) 0 8px / 8px 8px,
+    radial-gradient(circle, currentColor 0 2px, transparent 2.2px) 8px 8px / 8px 8px;
+  background-repeat: no-repeat;
+  border-radius: 0;
+  box-shadow: none;
   content: "";
-  height: 3px;
-  left: 6.5px;
+  height: 12px;
+  left: 50%;
   position: absolute;
-  top: 6.5px;
-  width: 3px;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
 }
 
 .drag-handle:active {
@@ -1842,8 +1864,23 @@ select {
   border: 0 !important;
 }
 
+.measurement-excel-table .measurement-trend-row .forecast-date-cell,
+.measurement-excel-table .measurement-trend-row .history-placeholder-cell {
+  border-bottom: 1px solid var(--measurement-line) !important;
+  border-right: 1px solid var(--measurement-line) !important;
+  border-top: 1px solid var(--measurement-line) !important;
+}
+
+.measurement-excel-table .measurement-trend-row td:last-child {
+  border-right: 1px solid var(--measurement-line) !important;
+}
+
 .measurement-excel-table .measurement-trend-row td:nth-child(6) {
   border-right: 0 !important;
+}
+
+.measurement-excel-table .measurement-trend-row td:last-child {
+  border-right: 1px solid var(--measurement-line) !important;
 }
 
 .measurement-excel-table .measurement-separator-row td {
