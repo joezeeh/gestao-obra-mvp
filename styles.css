@@ -238,6 +238,106 @@
   }
 }
 
+@media (max-width: 720px) {
+  .work-header {
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .matrix-wrap {
+    border-radius: 6px;
+  }
+
+  .matrix-cell {
+    min-height: 31px;
+    min-width: 42px;
+    padding: 2px;
+  }
+
+  .matrix-cell.header,
+  .matrix-cell.floor-label {
+    font-size: 13px;
+  }
+
+  .matrix-cell.floor-label {
+    min-width: 100px;
+    padding-left: 8px;
+  }
+
+  .check-button {
+    border-radius: 5px;
+    height: 21px;
+    width: 21px;
+  }
+
+  .report-header {
+    align-items: start;
+    gap: 10px;
+    grid-template-columns: 74px minmax(0, 1fr);
+    min-height: 0;
+    padding: 10px;
+  }
+
+  .report-logo {
+    height: 70px;
+  }
+
+  .report-info h2 {
+    font-size: 20px;
+    line-height: 1.1;
+  }
+
+  .report-info p,
+  .report-info span {
+    font-size: 12px;
+  }
+
+  .report-badge {
+    grid-column: 1 / -1;
+    justify-items: start;
+    text-align: left;
+  }
+
+  .report-badge strong {
+    font-size: 17px;
+    line-height: 1.2;
+    white-space: normal;
+  }
+
+  .report-badge span {
+    font-size: 18px;
+  }
+
+  .measurement-table-card,
+  .trend-card {
+    overflow: hidden;
+    padding: 10px;
+  }
+
+  .measurement-excel-scroll {
+    margin-inline: -2px;
+    max-width: calc(100vw - 24px);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .measurement-excel-table {
+    min-width: 840px;
+    width: 840px;
+  }
+
+  .measurement-excel-table th,
+  .measurement-excel-table td {
+    font-size: 14px;
+    height: 28px;
+    padding: 3px 6px;
+  }
+
+  .measurement-excel-table .group {
+    font-size: 15px;
+  }
+}
+
 @media print {
   body[data-active-view="review"] .measurement-excel-table .first-history-cell {
     border-left: 1px solid var(--measurement-line) !important;
@@ -954,6 +1054,9 @@ select {
   box-shadow: 7px 0 0 currentColor, 0 7px 0 currentColor, 7px 7px 0 currentColor;
   content: "";
   height: 3px;
+  left: 6.5px;
+  position: absolute;
+  top: 6.5px;
   width: 3px;
 }
 
@@ -1062,14 +1165,14 @@ select {
   justify-content: center;
   min-height: 34px;
   min-width: 44px;
-  padding: 4px;
+  padding: 3px;
 }
 
 .matrix-cell.header,
 .matrix-cell.floor-label {
   background: #eef2f7;
   color: #0f172a;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
 }
 
@@ -1109,6 +1212,19 @@ select {
 .check-button.checked {
   background: var(--accent);
   border-color: var(--accent);
+}
+
+.check-button.started {
+  background: #facc15;
+  border-color: #eab308;
+}
+
+.check-button.started::after {
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 2px;
+  content: "";
+  height: 8px;
+  width: 8px;
 }
 
 .check-button.checked::after {
@@ -2451,6 +2567,11 @@ select {
 .mini-dot.checked {
   background: var(--accent);
   border-color: var(--accent);
+}
+
+.mini-dot.started {
+  background: #facc15;
+  border-color: #eab308;
 }
 
 .mini-dot-empty {

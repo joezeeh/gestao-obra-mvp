@@ -375,7 +375,7 @@ function buildChecks(progressRows) {
   progressRows.forEach((row) => {
     if (!checks[row.stage_id]) checks[row.stage_id] = {};
     if (!checks[row.stage_id][row.floor_id]) checks[row.stage_id][row.floor_id] = {};
-    checks[row.stage_id][row.floor_id][row.unit_label] = row.done;
+    checks[row.stage_id][row.floor_id][row.unit_label] = row.status || (row.done ? "done" : "");
   });
 
   return checks;
@@ -1068,7 +1068,7 @@ function renderTrackingMatrix() {
   }
 
   const units = collectUnits();
-  const columns = ["96px", ...units.map(() => "44px")].join(" ");
+  const columns = ["100px", ...units.map(() => "42px")].join(" ");
   elements.trackingMatrix.style.gridTemplateColumns = columns;
 
   addMatrixCell("", "matrix-cell header corner");
@@ -1083,7 +1083,8 @@ function renderTrackingMatrix() {
 
       if (floor.units.includes(unit) && isStageUnitApplicable(activeStageId, floor.id, unit)) {
         const button = document.createElement("button");
-        button.className = `check-button ${isChecked(activeStageId, floor.id, unit) ? "checked" : ""}`;
+        const status = getCheckStatus(activeStageId, floor.id, unit);
+        button.className = `check-button ${status === "done" ? "checked" : status === "started" ? "started" : ""}`;
         button.type = "button";
         button.setAttribute("aria-label", `${floor.name} unidade ${unit}`);
         button.addEventListener("click", () => toggleCheck(activeStageId, floor.id, unit));
@@ -1105,7 +1106,7 @@ function renderTrackingMatrix() {
 }
 
 function renderFloorTrackingMatrix() {
-  elements.trackingMatrix.style.gridTemplateColumns = "96px 74px";
+  elements.trackingMatrix.style.gridTemplateColumns = "100px 72px";
 
   addMatrixCell("", "matrix-cell header corner");
   addMatrixCell("Pavimento", "matrix-cell header");
@@ -1118,7 +1119,8 @@ function renderFloorTrackingMatrix() {
 
     if (isStageUnitApplicable(activeStageId, floor.id, FLOOR_CHECK_KEY)) {
       const button = document.createElement("button");
-      button.className = `check-button ${isChecked(activeStageId, floor.id, FLOOR_CHECK_KEY) ? "checked" : ""}`;
+      const status = getCheckStatus(activeStageId, floor.id, FLOOR_CHECK_KEY);
+      button.className = `check-button ${status === "done" ? "checked" : status === "started" ? "started" : ""}`;
       button.type = "button";
     button.setAttribute("aria-label", `${floor.name} concluído`);
     button.addEventListener("click", () => toggleCheck(activeStageId, floor.id, FLOOR_CHECK_KEY));
@@ -1211,7 +1213,8 @@ function renderPanel() {
 
       units.forEach((unit) => {
         const dot = document.createElement("span");
-        dot.className = `mini-dot ${isChecked(stage.id, floor.id, unit) ? "checked" : ""}`;
+        const status = getCheckStatus(stage.id, floor.id, unit);
+        dot.className = `mini-dot ${status === "done" ? "checked" : status === "started" ? "started" : ""}`;
         if (!isStageUnitApplicable(stage.id, floor.id, unit)) dot.className = "mini-dot mini-dot-empty";
         dots.append(dot);
       });
@@ -2575,17 +2578,35 @@ function toggleCheck(stageId, floorId, unit) {
   if (!isStageUnitApplicable(stageId, floorId, unit)) return;
   if (!state.checks[stageId]) state.checks[stageId] = {};
   if (!state.checks[stageId][floorId]) state.checks[stageId][floorId] = {};
-  state.checks[stageId][floorId][unit] = !state.checks[stageId][floorId][unit];
-  saveProgressRemote(stageId, floorId, unit, state.checks[stageId][floorId][unit]);
+
+  const current = getCheckStatus(stageId, floorId, unit);
+  const next = current === "" ? "started" : current === "started" ? "done" : "";
+
+  if (next) {
+    state.checks[stageId][floorId][unit] = next;
+  } else {
+    delete state.checks[stageId][floorId][unit];
+  }
+
+  saveProgressRemote(stageId, floorId, unit, next);
   saveAndRender();
 }
 
-function isChecked(stageId, floorId, unit) {
-  return Boolean(state.checks[stageId]?.[floorId]?.[unit]);
+function getCheckStatus(stageId, floorId, unit) {
+  const value = state.checks[stageId]?.[floorId]?.[unit];
+  if (value === true) return "done";
+  if (value === "done" || value === "started") return value;
+  return "";
 }
 
-async function saveProgressRemote(stageId, floorId, unit, done) {
+function isChecked(stageId, floorId, unit) {
+  return getCheckStatus(stageId, floorId, unit) === "done";
+}
+
+async function saveProgressRemote(stageId, floorId, unit, status) {
   if (!remoteReady || !currentProjectId || !stageId || !floorId || !unit) return;
+
+  const done = status === "done";
 
   await withRealtimeSuppressed(async () => {
     const { error } = await supabaseClient
@@ -2596,11 +2617,28 @@ async function saveProgressRemote(stageId, floorId, unit, done) {
         floor_id: floorId,
         unit_label: unit,
         done,
+        status,
         updated_by: currentUser?.id || null,
         updated_at: new Date().toISOString()
       }, { onConflict: "stage_id,floor_id,unit_label" });
 
-    if (error) console.error(error);
+    if (error) {
+      console.error(error);
+      if (String(error.message || "").toLowerCase().includes("status")) {
+        const { error: fallbackError } = await supabaseClient
+          .from("progress")
+          .upsert({
+            project_id: currentProjectId,
+            stage_id: stageId,
+            floor_id: floorId,
+            unit_label: unit,
+            done,
+            updated_by: currentUser?.id || null,
+            updated_at: new Date().toISOString()
+          }, { onConflict: "stage_id,floor_id,unit_label" });
+        if (fallbackError) console.error(fallbackError);
+      }
+    }
   });
 }
 

@@ -48,6 +48,7 @@ create table if not exists public.progress (
   floor_id uuid not null references public.floors(id) on delete cascade,
   unit_label text not null,
   done boolean not null default false,
+  status text not null default '',
   updated_by uuid references auth.users(id),
   updated_at timestamptz not null default now(),
   unique (stage_id, floor_id, unit_label)
@@ -91,6 +92,9 @@ create index if not exists progress_project_idx on public.progress(project_id);
 create index if not exists stage_unit_masks_project_idx on public.stage_unit_masks(project_id);
 create index if not exists measurements_project_sort_idx on public.measurements(project_id, sort_order);
 create index if not exists measurement_totals_project_idx on public.measurement_stage_totals(project_id);
+
+alter table public.progress
+add column if not exists status text not null default '';
 
 alter table public.projects enable row level security;
 alter table public.floors enable row level security;
