@@ -1181,7 +1181,7 @@ function createTrackingStageCard(stage) {
   spacer.textContent = "";
   const labels = document.createElement("div");
   labels.className = "tracking-mini-units tracking-column-labels";
-  labels.style.gridTemplateColumns = `repeat(${maxColumns}, 24px)`;
+  labels.style.gridTemplateColumns = `repeat(${maxColumns}, minmax(18px, 1fr))`;
   units.forEach((unit, index) => {
     const label = document.createElement("span");
     label.textContent = unit === FLOOR_CHECK_KEY ? "PAV." : String(index + 1).padStart(2, "0");
@@ -1197,7 +1197,7 @@ function createTrackingStageCard(stage) {
     floorName.textContent = floor.name;
     const dots = document.createElement("div");
     dots.className = "tracking-mini-units";
-    dots.style.gridTemplateColumns = `repeat(${maxColumns}, 24px)`;
+    dots.style.gridTemplateColumns = `repeat(${maxColumns}, minmax(18px, 1fr))`;
 
     units.forEach((unit) => {
       const exists = unit === FLOOR_CHECK_KEY || floor.units.includes(unit);
