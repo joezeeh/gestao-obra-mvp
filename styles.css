@@ -1076,18 +1076,20 @@ select {
 
 .drag-handle {
   align-items: center;
+  background-image:
+    radial-gradient(circle at 9px 9px, currentColor 0 1.7px, transparent 1.8px),
+    radial-gradient(circle at 15px 9px, currentColor 0 1.7px, transparent 1.8px),
+    radial-gradient(circle at 9px 15px, currentColor 0 1.7px, transparent 1.8px),
+    radial-gradient(circle at 15px 15px, currentColor 0 1.7px, transparent 1.8px);
+  background-repeat: no-repeat;
   border: 1px solid var(--line);
   border-radius: 6px;
   color: var(--muted);
   cursor: grab;
-  display: grid;
+  display: block;
   font-size: 0;
   font-weight: 700;
-  gap: 4px;
-  grid-template-columns: repeat(2, 3px);
   height: 24px;
-  justify-content: center;
-  place-content: center;
   position: relative;
   user-select: none;
   width: 24px;
@@ -1098,12 +1100,7 @@ select {
 }
 
 .drag-handle-dot {
-  background: currentColor;
-  border-radius: 999px;
-  display: block;
-  height: 3px;
-  pointer-events: none;
-  width: 3px;
+  display: none;
 }
 
 .drag-handle:active {
@@ -1191,12 +1188,12 @@ select {
   display: flex;
   gap: 8px;
   justify-content: space-between;
-  min-height: 46px;
-  padding: 8px 10px;
+  min-height: 54px;
+  padding: 10px 12px;
 }
 
 .tracking-stage-card header strong {
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.15;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1207,21 +1204,21 @@ select {
 .tracking-stage-card header span {
   color: #dce6f2;
   flex: 0 0 auto;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
 }
 
 .tracking-mini-matrix {
   display: grid;
-  gap: 4px;
-  padding: 10px;
+  gap: 5px;
+  padding: 12px;
 }
 
 .tracking-mini-row {
   align-items: center;
   display: grid;
   gap: 5px;
-  grid-template-columns: 76px 1fr;
+  grid-template-columns: 72px 1fr;
 }
 
 .tracking-mini-row > strong {
@@ -2629,8 +2626,8 @@ select {
   box-shadow: var(--shadow);
   display: grid;
   gap: 16px;
-  grid-template-columns: 150px 1fr;
-  min-height: 96px;
+  grid-template-columns: 150px minmax(0, 1fr);
+  min-height: 118px;
   padding: 14px;
 }
 
@@ -2638,16 +2635,19 @@ select {
   align-items: center;
   background: var(--surface-2);
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 8px;
   display: flex;
-  height: 68px;
+  height: 112px;
   justify-content: center;
+  overflow: hidden;
 }
 
 .print-logo img {
-  max-height: 54px;
-  max-width: 130px;
+  height: 100%;
+  max-height: 100%;
+  max-width: 100%;
   object-fit: contain;
+  width: 100%;
 }
 
 .print-info h2 {
