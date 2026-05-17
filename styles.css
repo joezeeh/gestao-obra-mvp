@@ -206,8 +206,13 @@
     height: auto !important;
     line-height: 1.08 !important;
     min-height: 0 !important;
-    padding: 0 !important;
+    padding-left: 18px !important;
+    padding-right: 18px !important;
     text-align: center !important;
+  }
+
+  body[data-active-view="review"] .measurement-excel-table .measurement-delta-input {
+    padding: 0 !important;
   }
 
   body[data-active-view="review"] .measurement-excel-table .forecast-date-cell .date-text-input {
@@ -1087,7 +1092,7 @@ select {
 
 .drag-handle::before {
   background: currentColor;
-  border-radius: 0;
+  border-radius: 50%;
   box-shadow: 7px 0 0 currentColor, 0 7px 0 currentColor, 7px 7px 0 currentColor;
   content: "";
   height: 3px;
@@ -1116,7 +1121,7 @@ select {
   align-items: end;
   display: grid;
   gap: 12px;
-  grid-template-columns: minmax(170px, 260px) minmax(170px, 240px) auto minmax(170px, 230px) minmax(150px, 190px);
+  grid-template-columns: minmax(170px, 320px) minmax(170px, 260px) auto minmax(150px, 240px);
   margin-bottom: 16px;
 }
 
@@ -1125,13 +1130,7 @@ select {
 }
 
 .progress-box {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  display: grid;
-  gap: 2px;
-  min-height: 62px;
-  padding: 10px 12px;
+  display: none;
 }
 
 .progress-box strong {
@@ -1205,7 +1204,7 @@ select {
 .tracking-stage-card header span {
   color: #dce6f2;
   flex: 0 0 auto;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -1252,11 +1251,11 @@ select {
   appearance: none;
   background: #fff;
   border: 1px solid #d4dce5;
-  border-radius: 5px;
+  border-radius: 0;
   cursor: pointer;
-  height: 24px;
+  height: 21px;
   justify-self: center;
-  max-width: 24px;
+  max-width: 21px;
   padding: 0;
   width: 100%;
 }
@@ -1830,8 +1829,8 @@ select {
   font-weight: 700 !important;
   min-height: 22px !important;
   padding-bottom: 0 !important;
-  padding-left: 22px !important;
-  padding-right: 22px !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
   padding-top: 0 !important;
   text-align: center !important;
 }
@@ -1879,8 +1878,8 @@ select {
 
 .measurement-excel-table .history-date .date-text-input {
   font-size: 15px;
-  padding-left: 22px;
-  padding-right: 22px;
+  padding-left: 24px;
+  padding-right: 24px;
   text-align: center;
 }
 
