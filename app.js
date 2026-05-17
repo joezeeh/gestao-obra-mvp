@@ -1059,6 +1059,9 @@ function renderStageSelect() {
 }
 
 function renderTrackingMatrix() {
+  renderTrackingBoard();
+  return;
+
   elements.trackingMatrix.innerHTML = "";
   elements.trackingMatrix.classList.remove("slide-next", "slide-previous");
 
@@ -1137,6 +1140,88 @@ function renderFloorTrackingMatrix() {
   elements.trackingCount.textContent = `${progress.done} de ${progress.total} pavimentos`;
 
   playStageSlide();
+}
+
+function renderTrackingBoard() {
+  elements.trackingMatrix.innerHTML = "";
+  elements.trackingMatrix.className = "matrix tracking-board";
+  elements.trackingMatrix.style.gridTemplateColumns = "";
+
+  state.stages.forEach((stage) => {
+    elements.trackingMatrix.append(createTrackingStageCard(stage));
+  });
+
+  const progress = calculateProgress(activeStageId);
+  elements.trackingPercent.textContent = formatPercent(progress.percent);
+  elements.trackingCount.textContent = `${progress.done} de ${progress.total} ${isFloorControlled(activeStageId) ? "pavimentos" : "unidades"}`;
+
+  playStageSlide();
+}
+
+function createTrackingStageCard(stage) {
+  const progress = calculateProgress(stage.id);
+  const card = document.createElement("article");
+  card.className = `tracking-stage-card ${stage.id === activeStageId ? "active" : ""}`;
+
+  const header = document.createElement("header");
+  const title = document.createElement("strong");
+  title.textContent = stage.name;
+  const count = document.createElement("span");
+  count.textContent = `${progress.done}/${progress.total} | ${formatPercent(progress.percent)}`;
+  header.append(title, count);
+
+  const matrix = document.createElement("div");
+  matrix.className = "tracking-mini-matrix";
+  const units = isFloorControlled(stage.id) ? [FLOOR_CHECK_KEY] : collectUnits();
+  const maxColumns = Math.max(1, units.length);
+
+  const columnHeader = document.createElement("div");
+  columnHeader.className = "tracking-mini-row tracking-column-row";
+  const spacer = document.createElement("strong");
+  spacer.textContent = "";
+  const labels = document.createElement("div");
+  labels.className = "tracking-mini-units tracking-column-labels";
+  labels.style.gridTemplateColumns = `repeat(${maxColumns}, 24px)`;
+  units.forEach((unit, index) => {
+    const label = document.createElement("span");
+    label.textContent = unit === FLOOR_CHECK_KEY ? "PAV." : String(index + 1).padStart(2, "0");
+    labels.append(label);
+  });
+  columnHeader.append(spacer, labels);
+  matrix.append(columnHeader);
+
+  state.floors.forEach((floor) => {
+    const row = document.createElement("div");
+    row.className = "tracking-mini-row";
+    const floorName = document.createElement("strong");
+    floorName.textContent = floor.name;
+    const dots = document.createElement("div");
+    dots.className = "tracking-mini-units";
+    dots.style.gridTemplateColumns = `repeat(${maxColumns}, 24px)`;
+
+    units.forEach((unit) => {
+      const exists = unit === FLOOR_CHECK_KEY || floor.units.includes(unit);
+      const applicable = exists && isStageUnitApplicable(stage.id, floor.id, unit);
+      const button = document.createElement("button");
+      const status = getCheckStatus(stage.id, floor.id, unit);
+      button.className = `tracking-dot ${status === "done" ? "checked" : status === "started" ? "started" : ""}`;
+      button.type = "button";
+      button.setAttribute("aria-label", `${stage.name} - ${floor.name} - ${unit === FLOOR_CHECK_KEY ? "pavimento" : `unidade ${unit}`}`);
+      if (!applicable) {
+        button.className = "tracking-dot not-applicable";
+        button.disabled = true;
+      } else {
+        button.addEventListener("click", () => toggleCheck(stage.id, floor.id, unit));
+      }
+      dots.append(button);
+    });
+
+    row.append(floorName, dots);
+    matrix.append(row);
+  });
+
+  card.append(header, matrix);
+  return card;
 }
 
 function playStageSlide() {

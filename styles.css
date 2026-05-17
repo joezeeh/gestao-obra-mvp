@@ -246,6 +246,27 @@
 
   .matrix-wrap {
     border-radius: 6px;
+    overflow-x: hidden;
+  }
+
+  .tracking-board {
+    display: block;
+  }
+
+  .tracking-stage-card {
+    display: none;
+  }
+
+  .tracking-stage-card.active {
+    display: block;
+  }
+
+  .tracking-mini-row {
+    grid-template-columns: 82px 1fr;
+  }
+
+  .tracking-mini-row > strong {
+    font-size: 13px;
   }
 
   .matrix-cell {
@@ -1066,10 +1087,10 @@ select {
 
 .drag-handle::before {
   background:
-    radial-gradient(circle, currentColor 0 2px, transparent 2.2px) 0 0 / 8px 8px,
-    radial-gradient(circle, currentColor 0 2px, transparent 2.2px) 8px 0 / 8px 8px,
-    radial-gradient(circle, currentColor 0 2px, transparent 2.2px) 0 8px / 8px 8px,
-    radial-gradient(circle, currentColor 0 2px, transparent 2.2px) 8px 8px / 8px 8px;
+    radial-gradient(circle at 3px 3px, currentColor 0 2px, transparent 2.2px),
+    radial-gradient(circle at 9px 3px, currentColor 0 2px, transparent 2.2px),
+    radial-gradient(circle at 3px 9px, currentColor 0 2px, transparent 2.2px),
+    radial-gradient(circle at 9px 9px, currentColor 0 2px, transparent 2.2px);
   background-repeat: no-repeat;
   border-radius: 0;
   box-shadow: none;
@@ -1147,6 +1168,117 @@ select {
 .matrix {
   display: grid;
   min-width: max-content;
+}
+
+.tracking-board {
+  align-items: start;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  min-width: 0;
+  width: 100%;
+}
+
+.tracking-stage-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 8px 22px rgba(23, 32, 42, 0.06);
+  overflow: hidden;
+}
+
+.tracking-stage-card header {
+  align-items: center;
+  background: #131e33;
+  color: #fff;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  min-height: 46px;
+  padding: 8px 10px;
+}
+
+.tracking-stage-card header strong {
+  font-size: 14px;
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tracking-stage-card header span {
+  color: #dce6f2;
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tracking-mini-matrix {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+}
+
+.tracking-mini-row {
+  align-items: center;
+  display: grid;
+  gap: 5px;
+  grid-template-columns: 76px 1fr;
+}
+
+.tracking-mini-row > strong {
+  color: #0f172a;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tracking-mini-units {
+  display: grid;
+  gap: 5px;
+  overflow-x: auto;
+}
+
+.tracking-column-row {
+  margin-bottom: -1px;
+}
+
+.tracking-column-labels span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+}
+
+.tracking-dot {
+  appearance: none;
+  background: #fff;
+  border: 1px solid #d4dce5;
+  border-radius: 5px;
+  cursor: pointer;
+  height: 24px;
+  padding: 0;
+  width: 24px;
+}
+
+.tracking-dot.started {
+  background: #facc15;
+  border-color: #eab308;
+}
+
+.tracking-dot.checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.tracking-dot.not-applicable {
+  background: #eef2f7;
+  border-color: #e2e8f0;
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .matrix.slide-next {
@@ -1701,7 +1833,7 @@ select {
   font-weight: 700 !important;
   min-height: 22px !important;
   padding-bottom: 0 !important;
-  padding-left: 0 !important;
+  padding-left: 22px !important;
   padding-right: 22px !important;
   padding-top: 0 !important;
   text-align: center !important;
@@ -1722,7 +1854,7 @@ select {
   line-height: 1;
   padding: 0;
   position: absolute;
-  right: 2px;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
   width: 16px;
@@ -1750,9 +1882,9 @@ select {
 
 .measurement-excel-table .history-date .date-text-input {
   font-size: 15px;
-  padding-left: 3px;
+  padding-left: 22px;
   padding-right: 22px;
-  text-align: left;
+  text-align: center;
 }
 
 .measurement-excel-table .forecast-date-cell .date-text-input {
@@ -1788,7 +1920,7 @@ select {
   padding: 0;
   filter: brightness(0) invert(1);
   opacity: 0.85;
-  right: 0;
+  right: 8px;
   width: 18px;
 }
 
