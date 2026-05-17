@@ -206,8 +206,8 @@
     height: auto !important;
     line-height: 1.08 !important;
     min-height: 0 !important;
-    padding-left: 4px !important;
-    padding-right: 24px !important;
+    padding-left: 0 !important;
+    padding-right: 18px !important;
     text-align: center !important;
   }
 
@@ -1084,7 +1084,7 @@ select {
   font-size: 0;
   font-weight: 700;
   gap: 4px;
-  grid-template-columns: repeat(2, 4px);
+  grid-template-columns: repeat(2, 3px);
   height: 24px;
   justify-content: center;
   place-content: center;
@@ -1101,9 +1101,9 @@ select {
   background: currentColor;
   border-radius: 999px;
   display: block;
-  height: 4px;
+  height: 3px;
   pointer-events: none;
-  width: 4px;
+  width: 3px;
 }
 
 .drag-handle:active {
@@ -1813,7 +1813,7 @@ select {
 }
 
 .measurement-excel-table .measurement-edit-head {
-  padding: 3px 6px;
+  padding: 3px 4px;
 }
 
 .measurement-label-editor {
@@ -1832,8 +1832,8 @@ select {
   font-weight: 700 !important;
   min-height: 22px !important;
   padding-bottom: 0 !important;
-  padding-left: 4px !important;
-  padding-right: 30px !important;
+  padding-left: 0 !important;
+  padding-right: 22px !important;
   padding-top: 0 !important;
   text-align: center !important;
 }
@@ -1853,7 +1853,7 @@ select {
   line-height: 1;
   padding: 0;
   position: absolute;
-  right: 7px;
+  right: 5px;
   top: 50%;
   transform: translateY(-50%);
   width: 16px;
@@ -1881,8 +1881,8 @@ select {
 
 .measurement-excel-table .history-date .date-text-input {
   font-size: 15px;
-  padding-left: 4px;
-  padding-right: 30px;
+  padding-left: 0;
+  padding-right: 22px;
   text-align: center;
 }
 
@@ -1919,7 +1919,7 @@ select {
   padding: 0;
   filter: brightness(0) invert(1);
   opacity: 0.85;
-  right: 7px;
+  right: 4px;
   width: 18px;
 }
 
@@ -1937,9 +1937,9 @@ select {
 
 .measurement-excel-table .forecast-date-cell .date-text-input {
   font-size: 15px;
-  padding-left: 3px;
+  padding-left: 0;
   padding-right: 22px;
-  text-align: left;
+  text-align: center;
 }
 
 .measurement-excel-table .forecast-date-cell .date-picker-input {
@@ -2710,6 +2710,7 @@ select {
 .mini-units {
   display: grid;
   gap: 5px;
+  justify-items: center;
 }
 
 .mini-column-row {
@@ -2726,7 +2727,7 @@ select {
 
 .mini-dot {
   background: #fff;
-  border: 1px solid #9aa3ad;
+  border: 1px solid #d4dce5;
   border-radius: 4px;
   height: 18px;
   width: 18px;
