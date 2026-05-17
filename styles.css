@@ -1080,27 +1080,30 @@ select {
   border-radius: 6px;
   color: var(--muted);
   cursor: grab;
-  display: flex;
+  display: grid;
   font-size: 0;
   font-weight: 700;
+  gap: 4px;
+  grid-template-columns: repeat(2, 4px);
   height: 24px;
   justify-content: center;
+  place-content: center;
   position: relative;
   user-select: none;
   width: 24px;
 }
 
 .drag-handle::before {
+  content: none;
+}
+
+.drag-handle-dot {
   background: currentColor;
   border-radius: 999px;
-  box-shadow: 7px 0 0 currentColor, 0 7px 0 currentColor, 7px 7px 0 currentColor;
-  content: "";
-  height: 3px;
-  left: 50%;
-  position: absolute;
-  top: 50%;
-  transform: translate(-5px, -5px);
-  width: 3px;
+  display: block;
+  height: 4px;
+  pointer-events: none;
+  width: 4px;
 }
 
 .drag-handle:active {

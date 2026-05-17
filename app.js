@@ -795,6 +795,7 @@ function renderStages() {
     handle.className = "drag-handle";
     handle.draggable = !isConfigLocked();
     handle.textContent = "";
+    addDragHandleDots(handle);
     handle.title = "Arrastar para reordenar";
     handle.addEventListener("dragstart", (event) => {
       event.dataTransfer.setData("text/plain", stage.id);
@@ -879,6 +880,14 @@ function renderStages() {
   });
 }
 
+function addDragHandleDots(handle) {
+  Array.from({ length: 4 }).forEach(() => {
+    const dot = document.createElement("span");
+    dot.className = "drag-handle-dot";
+    handle.append(dot);
+  });
+}
+
 function renderFloors() {
   elements.floorList.innerHTML = "";
 
@@ -900,6 +909,7 @@ function renderFloors() {
     handle.className = "drag-handle";
     handle.draggable = !isConfigLocked();
     handle.textContent = "";
+    addDragHandleDots(handle);
     handle.title = "Arrastar para reordenar";
     handle.addEventListener("dragstart", (event) => {
       event.dataTransfer.setData("text/plain", floor.id);
