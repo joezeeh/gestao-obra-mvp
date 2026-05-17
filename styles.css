@@ -1077,10 +1077,10 @@ select {
 .drag-handle {
   align-items: center;
   background-image:
-    radial-gradient(circle at 9px 9px, currentColor 0 1.7px, transparent 1.8px),
-    radial-gradient(circle at 15px 9px, currentColor 0 1.7px, transparent 1.8px),
-    radial-gradient(circle at 9px 15px, currentColor 0 1.7px, transparent 1.8px),
-    radial-gradient(circle at 15px 15px, currentColor 0 1.7px, transparent 1.8px);
+    radial-gradient(circle at 8.5px 8.5px, currentColor 0 1.55px, transparent 1.65px),
+    radial-gradient(circle at 15.5px 8.5px, currentColor 0 1.55px, transparent 1.65px),
+    radial-gradient(circle at 8.5px 15.5px, currentColor 0 1.55px, transparent 1.65px),
+    radial-gradient(circle at 15.5px 15.5px, currentColor 0 1.55px, transparent 1.65px);
   background-repeat: no-repeat;
   border: 1px solid var(--line);
   border-radius: 6px;
@@ -1232,6 +1232,7 @@ select {
 .tracking-mini-units {
   display: grid;
   gap: 5px;
+  justify-items: center;
   overflow: visible;
 }
 
@@ -1456,17 +1457,25 @@ select {
 
 .report-info {
   display: grid;
-  gap: 6px;
+  gap: 0;
 }
 
 .report-info h2 {
-  font-size: 24px;
+  font-size: 28px;
+  line-height: 1.05;
+  margin: 0;
 }
 
 .report-info p,
 .report-info span {
   color: var(--muted);
   font-size: 14px;
+  line-height: 1.25;
+  margin: 0;
+}
+
+.report-info span {
+  margin-top: 10px;
 }
 
 .report-badge {
@@ -2651,16 +2660,22 @@ select {
 }
 
 .print-info h2 {
-  font-size: 24px;
-  margin-bottom: 4px;
+  font-size: 28px;
+  line-height: 1.05;
+  margin: 0;
 }
 
 .print-info p,
 .print-info span {
   color: var(--muted);
   display: block;
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.25;
   margin: 0;
+}
+
+.print-info span {
+  margin-top: 10px;
 }
 
 .review-stage {
