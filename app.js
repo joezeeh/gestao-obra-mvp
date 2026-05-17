@@ -794,7 +794,7 @@ function renderStages() {
     const handle = document.createElement("span");
     handle.className = "drag-handle";
     handle.draggable = !isConfigLocked();
-    handle.textContent = "::";
+    handle.textContent = "";
     handle.title = "Arrastar para reordenar";
     handle.addEventListener("dragstart", (event) => {
       event.dataTransfer.setData("text/plain", stage.id);
@@ -899,7 +899,7 @@ function renderFloors() {
     const handle = document.createElement("span");
     handle.className = "drag-handle";
     handle.draggable = !isConfigLocked();
-    handle.textContent = "::";
+    handle.textContent = "";
     handle.title = "Arrastar para reordenar";
     handle.addEventListener("dragstart", (event) => {
       event.dataTransfer.setData("text/plain", floor.id);

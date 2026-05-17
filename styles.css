@@ -206,8 +206,8 @@
     height: auto !important;
     line-height: 1.08 !important;
     min-height: 0 !important;
-    padding-left: 18px !important;
-    padding-right: 18px !important;
+    padding-left: 4px !important;
+    padding-right: 24px !important;
     text-align: center !important;
   }
 
@@ -1092,7 +1092,7 @@ select {
 
 .drag-handle::before {
   background: currentColor;
-  border-radius: 50%;
+  border-radius: 999px;
   box-shadow: 7px 0 0 currentColor, 0 7px 0 currentColor, 7px 7px 0 currentColor;
   content: "";
   height: 3px;
@@ -1251,11 +1251,11 @@ select {
   appearance: none;
   background: #fff;
   border: 1px solid #d4dce5;
-  border-radius: 0;
+  border-radius: 4px;
   cursor: pointer;
-  height: 21px;
+  height: 18px;
   justify-self: center;
-  max-width: 21px;
+  max-width: 18px;
   padding: 0;
   width: 100%;
 }
@@ -1829,8 +1829,8 @@ select {
   font-weight: 700 !important;
   min-height: 22px !important;
   padding-bottom: 0 !important;
-  padding-left: 24px !important;
-  padding-right: 24px !important;
+  padding-left: 4px !important;
+  padding-right: 30px !important;
   padding-top: 0 !important;
   text-align: center !important;
 }
@@ -1850,7 +1850,7 @@ select {
   line-height: 1;
   padding: 0;
   position: absolute;
-  right: 8px;
+  right: 7px;
   top: 50%;
   transform: translateY(-50%);
   width: 16px;
@@ -1878,8 +1878,8 @@ select {
 
 .measurement-excel-table .history-date .date-text-input {
   font-size: 15px;
-  padding-left: 24px;
-  padding-right: 24px;
+  padding-left: 4px;
+  padding-right: 30px;
   text-align: center;
 }
 
@@ -1916,7 +1916,7 @@ select {
   padding: 0;
   filter: brightness(0) invert(1);
   opacity: 0.85;
-  right: 8px;
+  right: 7px;
   width: 18px;
 }
 
